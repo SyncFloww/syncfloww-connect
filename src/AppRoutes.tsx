@@ -94,7 +94,30 @@ function InnerRoutes() {
   );
 }
 
+import { useSyncExternalStore } from "react";
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export function AppRoutes() {
+  const hydrated = useHydrated();
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <img
+            src="/Icon.png"
+            alt="SyncFloww"
+            className="w-12 h-12 mx-auto mb-4 animate-pulse"
+          />
+        </div>
+      </div>
+    );
+  }
   return (
     <BrowserRouter>
       <InnerRoutes />

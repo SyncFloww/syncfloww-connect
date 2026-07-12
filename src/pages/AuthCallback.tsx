@@ -72,7 +72,7 @@ export default function AuthCallback() {
     window.dispatchEvent(new Event('auth-updated'));
 
     // Fetch the user profile to confirm tokens work, then redirect
-    apiClient.get('/api/users/auth/me/')
+    apiClient.get('/api/auth/me/')
       .then(() => {
         navigate('/dashboard', { replace: true });
       })

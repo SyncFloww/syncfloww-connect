@@ -28,7 +28,7 @@ export const useAuth = () => {
     const token = localStorage.getItem('access_token');
     if (token) {
       try {
-        const response = await apiClient.get('/api/users/auth/me/');
+        const response = await apiClient.get('/api/auth/me/');
         setUser(response.data);
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -60,7 +60,7 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      const response = await apiClient.post<AuthResponse>('/api/users/auth/register/', {
+      const response = await apiClient.post<AuthResponse>('/api/auth/register/', {
         email,
         password,
         password_confirm: password,
@@ -87,7 +87,7 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await apiClient.post<AuthResponse>('/api/users/auth/login/', {
+      const response = await apiClient.post<AuthResponse>('/api/auth/login/', {
         email,
         password,
       });
@@ -112,7 +112,7 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
-      const response = await apiClient.get('/api/users/auth/google/');
+      const response = await apiClient.get('/api/auth/google/');
       if (response.data?.redirect_url) {
         window.location.href = response.data.redirect_url;
         return { error: null };
@@ -134,7 +134,7 @@ export const useAuth = () => {
 
   const signInWithFacebook = async () => {
     try {
-      const response = await apiClient.get('/api/users/auth/facebook/');
+      const response = await apiClient.get('/api/auth/facebook/');
       if (response.data?.redirect_url) {
         window.location.href = response.data.redirect_url;
         return { error: null };
@@ -155,7 +155,7 @@ export const useAuth = () => {
 
   const signInWithApple = async () => {
     try {
-      const response = await apiClient.get('/api/users/auth/apple/');
+      const response = await apiClient.get('/api/auth/apple/');
       if (response.data?.redirect_url) {
         window.location.href = response.data.redirect_url;
         return { error: null };
@@ -179,7 +179,7 @@ export const useAuth = () => {
       const refreshToken = localStorage.getItem('refresh_token');
 
       if (refreshToken) {
-        await apiClient.post('/api/users/auth/logout/', {
+        await apiClient.post('/api/auth/logout/', {
           refresh_token: refreshToken,
         });
       }
@@ -206,7 +206,7 @@ export const useAuth = () => {
 
   const resetPassword = async (email: string) => {
     try {
-      await apiClient.post('/api/users/auth/password-reset/', {
+      await apiClient.post('/api/auth/password-reset/', {
         email,
       });
 

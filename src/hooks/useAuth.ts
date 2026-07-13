@@ -58,13 +58,22 @@ export const useAuth = () => {
   }, [checkAuth]);
 
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    confirmPassword: string,
+    firstName: string,
+    lastName: string,
+    referralCode?: string,
+  ) => {
     try {
       const response = await apiClient.post<AuthResponse>('/api/auth/register/', {
         email,
         password,
-        password_confirm: password,
-        full_name: fullName || '',
+        confirm_password: confirmPassword,
+        first_name: firstName,
+        last_name: lastName,
+        referral_code: referralCode || '',
       });
 
       const { user, tokens } = response.data;
@@ -77,11 +86,17 @@ export const useAuth = () => {
 
       return { error: null };
     } catch (error: any) {
-      return {
-        error: {
-          message: error.response?.data?.email?.[0] || error.response?.data?.password?.[0] || 'Registration failed'
-        }
-      };
+      const data = error.response?.data;
+      const message =
+        data?.first_name?.[0] ||
+        data?.last_name?.[0] ||
+        data?.email?.[0] ||
+        data?.password?.[0] ||
+        data?.confirm_password?.[0] ||
+        data?.referral_code?.[0] ||
+        data?.detail ||
+        'Registration failed';
+      return { error: { message } };
     }
   };
 

@@ -30,12 +30,17 @@ export default function Auth() {
   const { toast } = useToast();
 
   const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
+  const initialRef = searchParams.get('ref') || '';
   const [view, setView] = useState<AuthView>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [referralCode, setReferralCode] = useState(initialRef);
+  const [referralValid, setReferralValid] = useState<boolean | null>(initialRef ? null : null);
+  const [referralChecking, setReferralChecking] = useState(false);
+  const [referrerName, setReferrerName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -303,8 +308,14 @@ export default function Auth() {
     setIsSubmitting(true);
 
     try {
-      const fullName = `${firstName} ${lastName}`.trim();
-      const { error } = await signUp(email, password, fullName);
+      const { error } = await signUp(
+        email,
+        password,
+        confirmPassword,
+        firstName,
+        lastName,
+        referralCode.trim() || undefined,
+      );
       if (error) {
         toast({
           title: 'Unable to Create Account',
@@ -393,6 +404,9 @@ export default function Auth() {
     setConfirmPassword('');
     setFirstName('');
     setLastName('');
+    setReferralCode('');
+    setReferralValid(null);
+    setReferrerName('');
     setEmailError('');
     setEmailValid(false);
     setVoiceModeActive(false);
@@ -862,6 +876,75 @@ export default function Auth() {
                           ) : (
                             <><AlertCircle className="w-3 h-3" /> Passwords don't match yet</>
                           )}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Optional Referral Code */}
+                  <div className="space-y-1">
+                    <Label htmlFor="referral-code" className="text-sm text-muted-foreground">
+                      Referral Code <span className="text-xs opacity-60">(optional)</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="referral-code"
+                        type="text"
+                        value={referralCode}
+                        onChange={(e) => {
+                          const val = e.target.value.trim().toUpperCase();
+                          setReferralCode(val);
+                          setReferralValid(null);
+                          setReferrerName('');
+                          if (val.length >= 3) {
+                            setReferralChecking(true);
+                            fetch(`/api/auth/referral/validate/?code=${val}`)
+                              .then((r) => r.json())
+                              .then((d) => {
+                                setReferralValid(d.valid);
+                                setReferrerName(d.referrer_name || '');
+                              })
+                              .catch(() => setReferralValid(false))
+                              .finally(() => setReferralChecking(false));
+                          }
+                        }}
+                        className={`border-muted-foreground/30 pr-8 uppercase tracking-widest ${
+                          referralValid === true
+                            ? 'border-emerald-500'
+                            : referralValid === false
+                            ? 'border-destructive'
+                            : ''
+                        }`}
+                        placeholder="e.g. GRT7KQ92"
+                        maxLength={16}
+                      />
+                      <AnimatePresence>
+                        {referralChecking && (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          </motion.div>
+                        )}
+                        {!referralChecking && referralValid === true && (
+                          <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          </motion.div>
+                        )}
+                        {!referralChecking && referralValid === false && (
+                          <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <AlertCircle className="w-4 h-4 text-destructive" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <AnimatePresence>
+                      {referralValid === true && referrerName && (
+                        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs text-emerald-500 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Referred by {referrerName} — nice!
+                        </motion.p>
+                      )}
+                      {referralValid === false && (
+                        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-xs text-destructive mt-1">
+                          That referral code doesn't exist
                         </motion.p>
                       )}
                     </AnimatePresence>

@@ -8,7 +8,8 @@ import {
   Workflow,
   Users,
   Calendar,
-  BarChart3
+  BarChart3,
+  Gift
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logoBlue from '@/assets/logo-blue.png';
@@ -30,6 +31,7 @@ const mainNavigation = [
   { title: 'Workflows', url: '/generate', icon: Workflow },
   { title: 'My Projects', url: '/my-projects', icon: FolderOpen },
   { title: 'Customers', url: '/customers', icon: Users },
+  { title: 'Referrals', url: '/referrals', icon: Gift },
   { title: 'Calendar', url: '/calendar', icon: Calendar },
 ];
 

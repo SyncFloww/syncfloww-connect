@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import Welcome from "./pages/Welcome";
 import BrandManagement from "./pages/BrandManagement";
 import Customers from "./pages/Customers";
+import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
 
@@ -79,20 +80,21 @@ function InnerRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/generate" element={<Generate />} />
         <Route path="/my-projects" element={<MyProjects />} />
-        <Route path="/idea-generator" element={<IdeaGenerator />} />
+        <Route path="/customers" element={<Customers />} />
+        <Route path="/referrals" element={<Referral />} />
+        <Route path="/calendar" element={<DashboardPage />} />
+        <Route path="/analytics" element={<DashboardPage />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/ai-tools" element={<AITools />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/brands" element={<BrandManagement />} />
         <Route path="/brand-management" element={<BrandManagement />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/calendar" element={<DashboardPage />} />
-        <Route path="/analytics" element={<DashboardPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
+
 
 import { useSyncExternalStore } from "react";
 function useHydrated() {

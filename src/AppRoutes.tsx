@@ -137,9 +137,11 @@ export function AppRoutes() {
     );
   }
   return (
-    <BrowserRouter>
-      <InnerRoutes />
-      <InstallPrompt />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <InnerRoutes />
+        <InstallPrompt />
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

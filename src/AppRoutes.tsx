@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
 import Generate from "./pages/Generate";
@@ -17,6 +19,9 @@ import Customers from "./pages/Customers";
 import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { BrandProvider } from "@/contexts/BrandContext";
 
 const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
 const QA_BYPASS_PATHS = ["/customers", "/brand-management", "/brands"];

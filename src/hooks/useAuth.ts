@@ -159,7 +159,13 @@ export const useAuth = () => {
 
   const signInWithGoogle = async (_referralCode?: string) => {
     try {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      // The client ID is public. Prefer an explicit frontend setting, then use
+      // the backend configuration so deployments only need to manage it once.
+      let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        const { data } = await apiClient.get('/api/auth/google/');
+        clientId = data.client_id;
+      }
       if (!clientId) {
         return { error: { message: 'Google sign-in is not configured for this site.' } };
       }

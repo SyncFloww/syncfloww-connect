@@ -325,7 +325,7 @@ export default function Auth() {
       } else {
         const { title, description } = getSuccessMessage('signup');
         toast({ title, description });
-        navigate('/welcome');
+        navigate('/onboarding');
       }
     } catch (error) {
       toast({

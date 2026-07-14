@@ -18,7 +18,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api.ts';
+import apiClient from '@/lib/apiClient';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 interface Brand {
   id: string;
@@ -37,6 +38,7 @@ interface WorkflowItem {
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandsLoading, setBrandsLoading] = useState(true);
@@ -49,11 +51,15 @@ export default function DashboardPage() {
     const fetchBrandsData = async () => {
       try {
         setBrandsLoading(true);
-        const data = await api.getBrands();
+        if (!currentWorkspace) {
+          setBrands([]);
+          return;
+        }
+        const { data } = await apiClient.get(`/api/v1/brands/workspaces/${currentWorkspace.id}/`);
         const mappedBrands: Brand[] = data.map((b: any) => ({
           id: b.id.toString(),
           name: b.name,
-          status: b.is_active ? 'active' : 'pending',
+          status: 'active',
           socialConnected: false
         }));
         setBrands(mappedBrands);
@@ -64,12 +70,12 @@ export default function DashboardPage() {
       }
     };
 
-    if (user) {
+    if (user && !workspaceLoading) {
       fetchBrandsData();
     } else {
       setBrandsLoading(false);
     }
-  }, [user]);
+  }, [user, currentWorkspace, workspaceLoading]);
 
   return (
     <div className="space-y-6">
@@ -80,7 +86,7 @@ export default function DashboardPage() {
             Welcome {userName}
           </h1>
           <p className="text-muted-foreground">
-            Manage your brands and workflows
+            {currentWorkspace ? `Everything for ${currentWorkspace.name}` : 'Create a workspace to start planning content'}
           </p>
         </div>
         <Button onClick={() => navigate('/generate')} className="gap-2">
@@ -162,7 +168,7 @@ export default function DashboardPage() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Star className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>There are no brands yet</p>
-                  <Button variant="outline" className="mt-4" onClick={() => navigate('/settings')}>
+                  <Button variant="outline" className="mt-4" onClick={() => navigate(currentWorkspace ? '/brands' : '/onboarding')}>
                     Create Your First Brand
                   </Button>
                 </div>

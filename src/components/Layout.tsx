@@ -5,11 +5,13 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { User, LogOut } from 'lucide-react';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 export const Layout = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { workspaces, currentWorkspace, selectWorkspace } = useWorkspace();
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -41,6 +43,7 @@ export const Layout = () => {
                 {location.pathname === '/calendar' && 'Calendar'}
                 {location.pathname === '/analytics' && 'Analytics'}
               </h1>
+              {currentWorkspace && <select value={currentWorkspace.id} onChange={(event) => { const workspace = workspaces.find((item) => item.id === event.target.value); if (workspace) selectWorkspace(workspace); }} className="hidden rounded-md border bg-background px-2 py-1 text-sm md:block"><option value={currentWorkspace.id}>{currentWorkspace.name}</option>{workspaces.filter((item) => item.id !== currentWorkspace.id).map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>}
             </div>
             
             <div className="flex items-center gap-4">

@@ -17,6 +17,8 @@ import Customers from "./pages/Customers";
 import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import Onboarding from "./pages/Onboarding";
 
 const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
 const QA_BYPASS_PATHS = ["/customers", "/brand-management", "/brands"];
@@ -62,6 +64,7 @@ function InnerRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/welcome"
         element={
@@ -121,9 +124,6 @@ export function AppRoutes() {
     );
   }
   return (
-    <BrowserRouter>
-      <InnerRoutes />
-      <InstallPrompt />
-    </BrowserRouter>
+    <BrowserRouter><WorkspaceProvider><InnerRoutes /><InstallPrompt /></WorkspaceProvider></BrowserRouter>
   );
 }

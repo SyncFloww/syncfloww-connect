@@ -1,6 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/apiClient';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void; auto_select?: boolean; cancel_on_tap_outside?: boolean }) => void;
+          prompt: (listener?: (notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => void) => void;
+        };
+      };
+    };
+  }
+}
+
+const GOOGLE_IDENTITY_SCRIPT = 'https://accounts.google.com/gsi/client';
+
+function loadGoogleIdentity(): Promise<void> {
+  if (window.google?.accounts.id) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT}"]`);
+    const script = existingScript ?? document.createElement('script');
+    script.src = GOOGLE_IDENTITY_SCRIPT;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => window.google?.accounts.id ? resolve() : reject(new Error('Google Identity Services did not load.'));
+    script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
+    if (!existingScript) document.head.appendChild(script);
+  });
+}
+
 interface User {
   id: string;
   email: string;
@@ -127,25 +157,39 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithGoogle = async (referralCode?: string) => {
+  const signInWithGoogle = async (_referralCode?: string) => {
     try {
-      const refParam = referralCode ? `&ref=${encodeURIComponent(referralCode)}` : '';
-      const response = await apiClient.get(`/api/auth/google/?origin=${encodeURIComponent(window.location.origin)}${refParam}`);
-      if (response.data?.redirect_url) {
-        window.location.href = response.data.redirect_url;
-        return { error: null };
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        return { error: { message: 'Google sign-in is not configured for this site.' } };
       }
-      // If the backend returns tokens directly
-      if (response.data?.tokens) {
-        localStorage.setItem('access_token', response.data.tokens.access);
-        localStorage.setItem('refresh_token', response.data.tokens.refresh);
-        setUser(response.data.user);
-        return { error: null };
-      }
-      return { error: { message: 'Google sign-in is not configured on the server.' } };
+
+      await loadGoogleIdentity();
+      const result = await new Promise<{ token: string }>((resolve, reject) => {
+        window.google!.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => response.credential
+            ? resolve({ token: response.credential })
+            : reject(new Error('Google did not return a sign-in token.')),
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        window.google!.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            reject(new Error('Google sign-in prompt was not displayed.'));
+          }
+        });
+      });
+
+      const { data } = await apiClient.post('/api/auth/google/', result);
+      localStorage.setItem('access_token', data.tokens.access);
+      localStorage.setItem('refresh_token', data.tokens.refresh);
+      window.dispatchEvent(new Event('auth-updated'));
+      setUser(data.user);
+      return { error: null };
     } catch (error: any) {
       return {
-        error: { message: error.response?.data?.error || 'Google sign-in failed' }
+        error: { message: error.response?.data?.message || error.response?.data?.error || error.message || 'Google sign-in failed' }
       };
     }
   };

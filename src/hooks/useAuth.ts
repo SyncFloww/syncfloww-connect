@@ -81,6 +81,7 @@ export const useAuth = () => {
       // Store tokens
       localStorage.setItem('access_token', tokens.access);
       localStorage.setItem('refresh_token', tokens.refresh);
+      window.dispatchEvent(new Event('auth-updated'));
 
       setUser(user);
 
@@ -112,6 +113,7 @@ export const useAuth = () => {
       // Store tokens
       localStorage.setItem('access_token', tokens.access);
       localStorage.setItem('refresh_token', tokens.refresh);
+      window.dispatchEvent(new Event('auth-updated'));
 
       setUser(user);
 

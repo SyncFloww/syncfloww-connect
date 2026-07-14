@@ -44,6 +44,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void refreshWorkspaces();
+    window.addEventListener("auth-updated", refreshWorkspaces);
+    return () => window.removeEventListener("auth-updated", refreshWorkspaces);
   }, [refreshWorkspaces]);
 
   const selectWorkspace = (workspace: Workspace) => {

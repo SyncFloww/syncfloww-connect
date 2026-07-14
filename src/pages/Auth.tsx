@@ -370,10 +370,10 @@ export default function Auth() {
       let result;
       switch (provider) {
         case 'google':
-          result = await signInWithGoogle();
+          result = await signInWithGoogle(referralCode);
           break;
         case 'facebook':
-          result = await signInWithFacebook();
+          result = await signInWithFacebook(referralCode);
           break;
         case 'apple':
           result = await signInWithApple();

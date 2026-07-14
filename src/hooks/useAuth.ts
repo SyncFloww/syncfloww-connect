@@ -125,9 +125,10 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (referralCode?: string) => {
     try {
-      const response = await apiClient.get('/api/auth/google/');
+      const refParam = referralCode ? `&ref=${encodeURIComponent(referralCode)}` : '';
+      const response = await apiClient.get(`/api/auth/google/?origin=${encodeURIComponent(window.location.origin)}${refParam}`);
       if (response.data?.redirect_url) {
         window.location.href = response.data.redirect_url;
         return { error: null };
@@ -147,9 +148,10 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithFacebook = async () => {
+  const signInWithFacebook = async (referralCode?: string) => {
     try {
-      const response = await apiClient.get('/api/auth/facebook/');
+      const refParam = referralCode ? `&ref=${encodeURIComponent(referralCode)}` : '';
+      const response = await apiClient.get(`/api/auth/facebook/?origin=${encodeURIComponent(window.location.origin)}${refParam}`);
       if (response.data?.redirect_url) {
         window.location.href = response.data.redirect_url;
         return { error: null };
@@ -167,6 +169,7 @@ export const useAuth = () => {
       };
     }
   };
+
 
   const signInWithApple = async () => {
     try {

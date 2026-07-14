@@ -66,6 +66,11 @@ function InnerRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/auth/login" element={<Auth />} />
+      <Route path="/auth/register" element={<Navigate to="/auth?mode=signup" replace />} />
+      <Route path="/auth/forgot-password" element={<Auth />} />
+      <Route path="/auth/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route
         path="/welcome"
@@ -78,13 +83,19 @@ function InnerRoutes() {
       <Route
         element={
           <ProtectedRoute>
-            <Layout />
+            <WorkspaceProvider>
+              <BrandProvider>
+                <Layout />
+              </BrandProvider>
+            </WorkspaceProvider>
           </ProtectedRoute>
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/generate" element={<Generate />} />
+        <Route path="/ai-studio" element={<Generate />} />
         <Route path="/my-projects" element={<MyProjects />} />
+        <Route path="/content" element={<MyProjects />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/referrals" element={<Referral />} />
         <Route path="/calendar" element={<DashboardPage />} />

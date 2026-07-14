@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,9 @@ export const Layout = () => {
         <main className="flex-1 flex flex-col">
           {/* Header */}
           <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger />
+
           <h1 className="text-lg font-semibold text-foreground">
                 {location.pathname === '/dashboard' && 'Dashboard'}
                 {location.pathname === '/my-projects' && 'My Projects'}

@@ -11,10 +11,16 @@ declare global {
         };
       };
     };
+    FB?: {
+      init: (config: { appId: string; cookie: boolean; xfbml: boolean; version: string }) => void;
+      login: (callback: (response: { authResponse?: { accessToken: string } }) => void, options: { scope: string }) => void;
+    };
   }
 }
 
 const GOOGLE_IDENTITY_SCRIPT = 'https://accounts.google.com/gsi/client';
+const FACEBOOK_SDK_SCRIPT = 'https://connect.facebook.net/en_US/sdk.js';
+let configuredFacebookAppId: string | undefined;
 
 function loadGoogleIdentity(): Promise<void> {
   if (window.google?.accounts.id) return Promise.resolve();
@@ -27,6 +33,45 @@ function loadGoogleIdentity(): Promise<void> {
     script.defer = true;
     script.onload = () => window.google?.accounts.id ? resolve() : reject(new Error('Google Identity Services did not load.'));
     script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
+    if (!existingScript) document.head.appendChild(script);
+  });
+}
+
+function loadFacebookSdk(appId: string): Promise<void> {
+  const initialize = () => {
+    if (!window.FB) {
+      throw new Error('Facebook Login did not load.');
+    }
+    if (configuredFacebookAppId !== appId) {
+      window.FB.init({ appId, cookie: true, xfbml: false, version: 'v23.0' });
+      configuredFacebookAppId = appId;
+    }
+  };
+
+  if (window.FB) {
+    try {
+      initialize();
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${FACEBOOK_SDK_SCRIPT}"]`);
+    const script = existingScript ?? document.createElement('script');
+    script.src = FACEBOOK_SDK_SCRIPT;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      try {
+        initialize();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    };
+    script.onerror = () => reject(new Error('Unable to load Facebook Login.'));
     if (!existingScript) document.head.appendChild(script);
   });
 }
@@ -200,24 +245,31 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithFacebook = async (referralCode?: string) => {
+  const signInWithFacebook = async (_referralCode?: string) => {
     try {
-      const refParam = referralCode ? `&ref=${encodeURIComponent(referralCode)}` : '';
-      const response = await apiClient.get(`/api/auth/facebook/?origin=${encodeURIComponent(window.location.origin)}${refParam}`);
-      if (response.data?.redirect_url) {
-        window.location.href = response.data.redirect_url;
-        return { error: null };
+      const { data: configuration } = await apiClient.get('/api/auth/facebook/');
+      if (!configuration.app_id) {
+        return { error: { message: 'Facebook sign-in is not configured for this site.' } };
       }
-      if (response.data?.tokens) {
-        localStorage.setItem('access_token', response.data.tokens.access);
-        localStorage.setItem('refresh_token', response.data.tokens.refresh);
-        setUser(response.data.user);
-        return { error: null };
-      }
-      return { error: { message: 'Facebook sign-in is not configured on the server.' } };
+
+      await loadFacebookSdk(configuration.app_id);
+      const accessToken = await new Promise<string>((resolve, reject) => {
+        window.FB!.login((response) => {
+          const token = response.authResponse?.accessToken;
+          if (token) resolve(token);
+          else reject(new Error('Facebook sign-in was cancelled or did not return a token.'));
+        }, { scope: 'public_profile,email' });
+      });
+
+      const { data } = await apiClient.post('/api/auth/facebook/', { access_token: accessToken });
+      localStorage.setItem('access_token', data.tokens.access);
+      localStorage.setItem('refresh_token', data.tokens.refresh);
+      window.dispatchEvent(new Event('auth-updated'));
+      setUser(data.user);
+      return { error: null };
     } catch (error: any) {
       return {
-        error: { message: error.response?.data?.error || 'Facebook sign-in failed' }
+        error: { message: error.response?.data?.message || error.response?.data?.error || error.message || 'Facebook sign-in failed' }
       };
     }
   };

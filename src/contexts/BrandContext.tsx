@@ -16,7 +16,8 @@ const BrandContext = createContext<BrandContextValue | undefined>(undefined);
 const STORAGE_KEY = 'syncflow-active-brand';
 
 export function BrandProvider({ children }: { children: ReactNode }) {
-  const { activeWorkspaceId } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
+  const activeWorkspaceId = currentWorkspace?.id ?? null;
   const [activeBrandId, setActiveBrandIdState] = useState<string | null>(null);
 
   const { data: brands = [], isLoading } = useQuery(brandsListQuery(activeWorkspaceId || ''));

@@ -72,7 +72,7 @@ function InnerRoutes() {
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+      <Route path="/onboarding" element={<ProtectedRoute><WorkspaceProvider><Onboarding /></WorkspaceProvider></ProtectedRoute>} />
       <Route
         path="/welcome"
         element={

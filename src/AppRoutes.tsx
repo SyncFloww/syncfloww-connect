@@ -72,7 +72,7 @@ function InnerRoutes() {
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/onboarding" element={<ProtectedRoute><WorkspaceProvider><Onboarding /></WorkspaceProvider></ProtectedRoute>} />
+      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route
         path="/welcome"
         element={
@@ -84,9 +84,7 @@ function InnerRoutes() {
       <Route
         element={
           <ProtectedRoute>
-            <WorkspaceProvider>
-              <Layout />
-            </WorkspaceProvider>
+            <Layout />
           </ProtectedRoute>
         }
       >
@@ -109,6 +107,7 @@ function InnerRoutes() {
     </Routes>
   );
 }
+
 
 
 import { useSyncExternalStore } from "react";
@@ -138,9 +137,12 @@ export function AppRoutes() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <InnerRoutes />
-        <InstallPrompt />
+        <WorkspaceProvider>
+          <InnerRoutes />
+          <InstallPrompt />
+        </WorkspaceProvider>
       </BrowserRouter>
     </ThemeProvider>
   );
 }
+

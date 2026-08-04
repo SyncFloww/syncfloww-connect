@@ -15,6 +15,7 @@ import AITools from "./pages/AITools";
 import Settings from "./pages/Settings";
 import Welcome from "./pages/Welcome";
 import BrandManagement from "./pages/BrandManagement";
+import Campaigns from "./pages/Campaigns";
 import Customers from "./pages/Customers";
 import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
@@ -100,6 +101,7 @@ function InnerRoutes() {
         <Route path="/templates" element={<Templates />} />
         <Route path="/ai-tools" element={<AITools />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/brands" element={<BrandManagement />} />
         <Route path="/brand-management" element={<BrandManagement />} />
       </Route>

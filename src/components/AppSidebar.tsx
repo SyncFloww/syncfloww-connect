@@ -26,9 +26,13 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
+import { Target, Building2 } from 'lucide-react';
+
 const mainNavigation = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Workflows', url: '/generate', icon: Workflow },
+  { title: 'Campaigns', url: '/campaigns', icon: Target },
+  { title: 'Brands', url: '/brands', icon: Building2 },
   { title: 'My Projects', url: '/my-projects', icon: FolderOpen },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Referrals', url: '/referrals', icon: Gift },

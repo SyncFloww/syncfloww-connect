@@ -88,7 +88,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar className="border-r border-border bg-surface">
+    <Sidebar collapsible="icon" className="border-r border-border bg-surface">
       <SidebarContent>
         {/* Logo/Brand Section */}
         <div className="p-4 border-b border-border">

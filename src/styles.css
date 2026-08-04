@@ -183,7 +183,26 @@
   border-color: hsl(var(--border));
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+html {
+  overflow-x: hidden;
+}
+
 body {
+  margin: 0;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }

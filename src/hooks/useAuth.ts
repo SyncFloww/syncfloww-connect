@@ -9,6 +9,14 @@ declare global {
           initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void; auto_select?: boolean; cancel_on_tap_outside?: boolean }) => void;
           prompt: (listener?: (notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => void) => void;
         };
+        oauth2: {
+          initCodeClient: (config: {
+            client_id: string;
+            scope: string;
+            ux_mode: 'popup';
+            callback: (response: { code?: string; error?: string }) => void;
+          }) => { requestCode: () => void };
+        };
       };
     };
     FB?: {
@@ -23,7 +31,7 @@ const FACEBOOK_SDK_SCRIPT = 'https://connect.facebook.net/en_US/sdk.js';
 let configuredFacebookAppId: string | undefined;
 
 function loadGoogleIdentity(): Promise<void> {
-  if (window.google?.accounts.id) return Promise.resolve();
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
     const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT}"]`);
@@ -31,7 +39,10 @@ function loadGoogleIdentity(): Promise<void> {
     script.src = GOOGLE_IDENTITY_SCRIPT;
     script.async = true;
     script.defer = true;
-    script.onload = () => window.google?.accounts.id ? resolve() : reject(new Error('Google Identity Services did not load.'));
+    script.onload = () =>
+      window.google?.accounts?.oauth2
+        ? resolve()
+        : reject(new Error('Google Identity Services did not load.'));
     script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
     if (!existingScript) document.head.appendChild(script);
   });
@@ -223,8 +234,7 @@ export const useAuth = () => {
 
   const signInWithGoogle = async (_referralCode?: string) => {
     try {
-      // The client ID is public. Prefer an explicit frontend setting, then use
-      // the backend configuration so deployments only need to manage it once.
+      // Get client_id from backend if not set in env
       let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId) {
         const { data } = await apiClient.get('/api/auth/google/');
@@ -235,23 +245,27 @@ export const useAuth = () => {
       }
 
       await loadGoogleIdentity();
-      const result = await new Promise<{ token: string }>((resolve, reject) => {
-        window.google!.accounts.id.initialize({
+
+      // Use the OAuth 2.0 Code flow (popup mode) — works in Edge, incognito,
+      // and all browsers that block Google One Tap (which needs 3rd-party cookies).
+      const authCode = await new Promise<string>((resolve, reject) => {
+        const client = window.google!.accounts.oauth2.initCodeClient({
           client_id: clientId,
-          callback: (response) => response.credential
-            ? resolve({ token: response.credential })
-            : reject(new Error('Google did not return a sign-in token.')),
-          auto_select: false,
-          cancel_on_tap_outside: true,
+          scope: 'openid email profile',
+          ux_mode: 'popup',
+          callback: (response) => {
+            if (response.code) {
+              resolve(response.code);
+            } else {
+              reject(new Error(response.error || 'Google sign-in was cancelled.'));
+            }
+          },
         });
-        window.google!.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            reject(new Error('Google sign-in prompt was not displayed.'));
-          }
-        });
+        client.requestCode();
       });
 
-      const { data } = await apiClient.post('/api/auth/google/', result);
+      // Exchange the auth code for tokens on the backend
+      const { data } = await apiClient.post('/api/auth/google/', { code: authCode });
       const tokens = getAuthTokens(data);
       localStorage.setItem('access_token', tokens.access);
       localStorage.setItem('refresh_token', tokens.refresh);

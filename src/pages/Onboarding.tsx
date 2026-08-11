@@ -37,17 +37,18 @@ export default function Onboarding() {
   };
 
   const handleBrand = async () => {
-    if (!brandName.trim() || !currentWorkspace) return;
+    if (!brandName.trim()) return;
     setSaving(true);
     try {
-      await apiClient.post(`/api/v1/brands/workspaces/${currentWorkspace.id}/`, {
-        name: brandName.trim(), industry, website, target_audience: audience, voice: { tone: voice },
+      await apiClient.post('/api/social/brands/', {
+        name: brandName.trim(), industry, website, target_audience: audience, voice,
       });
       setStep(3);
     } catch {
       toast({ title: "Could not create brand", description: "Please check the supplied details and try again.", variant: "destructive" });
     } finally { setSaving(false); }
   };
+
 
   const next = <Button className="gap-2" disabled={saving}>{saving ? "Saving…" : "Continue"}<ChevronRight className="h-4 w-4" /></Button>;
   return <main className="min-h-screen bg-muted/30 py-10 px-4"><div className="mx-auto max-w-2xl space-y-8">

@@ -82,7 +82,7 @@ const DEFAULT_FORM = {
 };
 
 export default function BrandManagement() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { refreshWorkspaces } = useWorkspace();
@@ -98,10 +98,12 @@ export default function BrandManagement() {
   const [formData, setFormData] = useState(DEFAULT_FORM);
 
   useEffect(() => {
-    if (!user) { navigate('/auth'); return; }
+    // Wait for auth to finish loading before fetching — avoids false redirect
+    if (authLoading) return;
+    if (!user) { navigate('/auth', { replace: true }); return; }
     fetchBrands();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchBrands = async () => {
     try {

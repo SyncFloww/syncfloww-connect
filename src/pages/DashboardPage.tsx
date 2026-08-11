@@ -1,41 +1,19 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus,
-  TrendingUp,
-  BarChart3,
-  CheckCircle,
-  RefreshCw,
-  Clock,
-  Share2,
-  Calendar,
-  Star,
-  MoreHorizontal,
-  Building2,
-  Layers,
-  ArrowRight,
-  Zap,
-  Globe,
+  Plus, TrendingUp, BarChart3, CheckCircle, RefreshCw,
+  Clock, Share2, Calendar, Star, MoreHorizontal,
+  Building2, Zap, Globe,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '@/lib/apiClient';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { usePublishing } from '@/hooks/usePublishing';
 import { useSocialOAuth } from '@/hooks/useSocialOAuth';
-import { useToast } from '@/hooks/use-toast';
 
 interface Brand {
   id: string;
@@ -46,18 +24,18 @@ interface Brand {
 
 function BrandAvatar({ brand }: { brand: Brand }) {
   const letter = brand.name.charAt(0).toUpperCase();
-  const colors = [
+  const palette = [
     'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
     'bg-amber-500', 'bg-rose-500', 'bg-cyan-500',
   ];
-  const color = colors[brand.name.charCodeAt(0) % colors.length];
+  const color = palette[brand.name.charCodeAt(0) % palette.length];
   if (brand.logo_url) {
     return (
       <img
         src={brand.logo_url}
         alt={brand.name}
         className="w-9 h-9 rounded-lg object-cover"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
       />
     );
   }
@@ -71,9 +49,6 @@ function BrandAvatar({ brand }: { brand: Brand }) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { workspaces, currentWorkspace, loading: workspaceLoading, createWorkspace } = useWorkspace();
-
   const { dashboard, isLoadingDashboard, refreshMetrics, isRefreshing } = useAnalytics();
   const { posts } = usePublishing();
   const { handleAuthorize } = useSocialOAuth();
@@ -81,117 +56,24 @@ export default function DashboardPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandsLoading, setBrandsLoading] = useState(true);
 
-  // Workspace creation dialog
-  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
-  const [wsName, setWsName] = useState('');
-  const [wsSlug, setWsSlug] = useState('');
-  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
-
   const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
   const scheduledCount = posts.filter(p => p.status === 'scheduled').length;
 
   useEffect(() => {
-    if (!user || workspaceLoading) return;
+    if (!user) return;
     const fetchBrands = async () => {
       try {
         setBrandsLoading(true);
-        const params = currentWorkspace ? { workspace: currentWorkspace.id } : {};
-        const { data } = await apiClient.get('/api/social/brands/', { params });
+        const { data } = await apiClient.get('/api/social/brands/');
         setBrands(Array.isArray(data) ? data : data?.results || []);
       } catch {
-        // silently fail — dashboard should degrade gracefully
+        // degrade gracefully
       } finally {
         setBrandsLoading(false);
       }
     };
     fetchBrands();
-  }, [user, currentWorkspace, workspaceLoading]);
-
-  const handleCreateWorkspace = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!wsName.trim()) return;
-    setCreatingWorkspace(true);
-    try {
-      const slug = wsSlug.trim() || wsName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      await createWorkspace(wsName.trim(), slug);
-      toast({ title: '🎉 Workspace created!', description: `"${wsName}" is ready to use.` });
-      setShowCreateWorkspace(false);
-      setWsName('');
-      setWsSlug('');
-    } catch (err: any) {
-      toast({
-        title: 'Failed to create workspace',
-        description: err?.response?.data?.name?.[0] || err?.response?.data?.detail || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setCreatingWorkspace(false);
-    }
-  };
-
-  // ── NO WORKSPACE — full onboarding prompt ──────────────────────────────────
-  if (!workspaceLoading && workspaces.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 px-4">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-          <Layers className="w-10 h-10 text-primary" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Welcome, {userName}! 👋</h2>
-          <p className="text-muted-foreground max-w-md text-sm">
-            Let's get you set up. Create your first workspace to start managing brands,
-            scheduling content, and growing your social presence.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button id="create-workspace-btn" size="lg" onClick={() => setShowCreateWorkspace(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Create Workspace
-          </Button>
-        </div>
-
-        {/* Create Workspace Dialog */}
-        <Dialog open={showCreateWorkspace} onOpenChange={setShowCreateWorkspace}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-primary" /> New Workspace
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateWorkspace} className="space-y-4 mt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="ws-name">Workspace Name <span className="text-destructive">*</span></Label>
-                <Input
-                  id="ws-name"
-                  placeholder="e.g. Acme Marketing"
-                  value={wsName}
-                  onChange={e => {
-                    setWsName(e.target.value);
-                    setWsSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
-                  }}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ws-slug">Slug (auto-generated)</Label>
-                <Input
-                  id="ws-slug"
-                  placeholder="acme-marketing"
-                  value={wsSlug}
-                  onChange={e => setWsSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                />
-              </div>
-              <div className="flex gap-3 pt-1">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowCreateWorkspace(false)}>Cancel</Button>
-                <Button type="submit" disabled={creatingWorkspace || !wsName.trim()} className="flex-1">
-                  {creatingWorkspace ? 'Creating…' : 'Create'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  }
+  }, [user]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -202,26 +84,52 @@ export default function DashboardPage() {
             Welcome back, {userName} 👋
           </h1>
           <p className="text-muted-foreground text-sm">
-            {currentWorkspace ? `Overview for ${currentWorkspace.name}` : 'Select a workspace to start'}
+            {brands.length > 0
+              ? `You have ${brands.length} brand${brands.length > 1 ? 's' : ''} active`
+              : 'Create your first brand to get started'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refreshMetrics()}
-            disabled={isRefreshing}
+            variant="outline" size="sm"
+            onClick={() => refreshMetrics()} disabled={isRefreshing}
             className="gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Sync Metrics
           </Button>
           <Button id="create-content-btn" onClick={() => navigate('/generate')} size="sm" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Create Content
+            <Plus className="w-4 h-4" /> Create Content
           </Button>
         </div>
       </div>
+
+      {/* No brands yet — prominent onboarding CTA */}
+      {!brandsLoading && brands.length === 0 && (
+        <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-8 px-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                <Building2 className="w-7 h-7 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Create your first brand</h3>
+                <p className="text-muted-foreground text-sm">
+                  Each brand gets its own workspace, content pipeline, and analytics.
+                </p>
+              </div>
+            </div>
+            <Button
+              id="dashboard-create-brand-btn"
+              onClick={() => navigate('/brands')}
+              size="lg"
+              className="gap-2 shrink-0"
+            >
+              <Plus className="w-4 h-4" /> Create Brand
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -254,8 +162,12 @@ export default function DashboardPage() {
           <Card key={stat.label}>
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{stat.label}</p>
-                <h3 className="text-2xl font-bold mt-1">{isLoadingDashboard ? <Skeleton className="h-7 w-16" /> : stat.value}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {stat.label}
+                </p>
+                {isLoadingDashboard
+                  ? <Skeleton className="h-7 w-16 mt-1" />
+                  : <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>}
               </div>
               <div className={`p-3 rounded-xl ${stat.bg}`}>{stat.icon}</div>
             </CardContent>
@@ -263,9 +175,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Main grid */}
+      {/* Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column */}
+        {/* Left: queue + brands */}
         <div className="lg:col-span-2 space-y-6">
           {/* Publishing Queue */}
           <Card>
@@ -288,7 +200,7 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {posts.slice(0, 5).map(post => (
-                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
                       <div className="space-y-1">
                         <p className="font-medium text-sm line-clamp-1">{post.title || post.content}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -311,9 +223,9 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Star className="w-5 h-5 text-amber-500" /> Brands &amp; Profiles
+                  <Star className="w-5 h-5 text-amber-500" /> My Brands
                 </CardTitle>
-                <CardDescription>Brand identities in this workspace</CardDescription>
+                <CardDescription>Your brand identities and workspaces</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => navigate('/brands')}>
                 Manage Brands
@@ -327,21 +239,19 @@ export default function DashboardPage() {
               ) : brands.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Building2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No brands created yet.</p>
-                  <Button
-                    id="dashboard-create-brand-btn"
-                    variant="outline"
-                    size="sm"
-                    className="mt-3 gap-2"
-                    onClick={() => navigate('/brands')}
-                  >
+                  <p className="text-sm">No brands yet.</p>
+                  <Button variant="outline" size="sm" className="mt-3 gap-2" onClick={() => navigate('/brands')}>
                     <Plus className="w-3.5 h-3.5" /> Create Brand
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {brands.map(b => (
-                    <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors">
+                    <div
+                      key={b.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                      onClick={() => navigate('/brands')}
+                    >
                       <div className="flex items-center gap-3">
                         <BrandAvatar brand={b} />
                         <div>
@@ -349,9 +259,7 @@ export default function DashboardPage() {
                           {b.industry && <p className="text-xs text-muted-foreground">{b.industry}</p>}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => navigate('/brands')}>
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                      <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                     </div>
                   ))}
                 </div>
@@ -360,7 +268,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Right column */}
+        {/* Right: actions */}
         <div className="space-y-6">
           {/* Quick Actions */}
           <Card>
@@ -413,47 +321,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-
-      {/* Workspace creation dialog (accessible from dashboard header too) */}
-      <Dialog open={showCreateWorkspace} onOpenChange={setShowCreateWorkspace}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-primary" /> New Workspace
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateWorkspace} className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ws-name-inline">Workspace Name <span className="text-destructive">*</span></Label>
-              <Input
-                id="ws-name-inline"
-                placeholder="e.g. Acme Marketing"
-                value={wsName}
-                onChange={e => {
-                  setWsName(e.target.value);
-                  setWsSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ws-slug-inline">Slug</Label>
-              <Input
-                id="ws-slug-inline"
-                placeholder="acme-marketing"
-                value={wsSlug}
-                onChange={e => setWsSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              />
-            </div>
-            <div className="flex gap-3 pt-1">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setShowCreateWorkspace(false)}>Cancel</Button>
-              <Button type="submit" disabled={creatingWorkspace || !wsName.trim()} className="flex-1">
-                {creatingWorkspace ? 'Creating…' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

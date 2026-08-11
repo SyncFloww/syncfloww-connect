@@ -296,10 +296,10 @@ export default function Auth() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: 'Password Too Short',
-        description: 'Your password must be at least 6 characters long.',
+        description: 'Your password must be at least 8 characters long.',
         variant: 'destructive',
       });
       return;
@@ -830,7 +830,7 @@ export default function Auth() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="border-muted-foreground/30 pr-10"
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                       <button
                         type="button"
@@ -853,7 +853,7 @@ export default function Auth() {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`border-muted-foreground/30 pr-10 ${confirmPassword && password && confirmPassword === password ? 'border-emerald-500' : confirmPassword && password && confirmPassword !== password ? 'border-destructive' : ''}`}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                       <button
                         type="button"

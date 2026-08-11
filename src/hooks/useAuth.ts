@@ -92,7 +92,23 @@ interface AuthTokens {
 
 interface AuthResponse {
   user: User;
-  tokens: AuthTokens;
+  tokens?: AuthTokens;
+  access?: string;
+  refresh?: string;
+}
+
+function getAuthTokens(response: AuthResponse): AuthTokens {
+  const tokens = response.tokens ?? (
+    response.access && response.refresh
+      ? { access: response.access, refresh: response.refresh }
+      : undefined
+  );
+
+  if (!tokens) {
+    throw new Error('The server did not return authentication tokens.');
+  }
+
+  return tokens;
 }
 
 export const useAuth = () => {
@@ -151,7 +167,8 @@ export const useAuth = () => {
         referral_code: referralCode || '',
       });
 
-      const { user, tokens } = response.data;
+      const { user } = response.data;
+      const tokens = getAuthTokens(response.data);
 
       // Store tokens
       localStorage.setItem('access_token', tokens.access);
@@ -164,6 +181,7 @@ export const useAuth = () => {
     } catch (error: any) {
       const data = error.response?.data;
       const message =
+        data?.error ||
         data?.first_name?.[0] ||
         data?.last_name?.[0] ||
         data?.email?.[0] ||
@@ -183,7 +201,8 @@ export const useAuth = () => {
         password,
       });
 
-      const { user, tokens } = response.data;
+      const { user } = response.data;
+      const tokens = getAuthTokens(response.data);
 
       // Store tokens
       localStorage.setItem('access_token', tokens.access);
@@ -233,8 +252,9 @@ export const useAuth = () => {
       });
 
       const { data } = await apiClient.post('/api/auth/google/', result);
-      localStorage.setItem('access_token', data.tokens.access);
-      localStorage.setItem('refresh_token', data.tokens.refresh);
+      const tokens = getAuthTokens(data);
+      localStorage.setItem('access_token', tokens.access);
+      localStorage.setItem('refresh_token', tokens.refresh);
       window.dispatchEvent(new Event('auth-updated'));
       setUser(data.user);
       return { error: null };
@@ -262,8 +282,9 @@ export const useAuth = () => {
       });
 
       const { data } = await apiClient.post('/api/auth/facebook/', { access_token: accessToken });
-      localStorage.setItem('access_token', data.tokens.access);
-      localStorage.setItem('refresh_token', data.tokens.refresh);
+      const tokens = getAuthTokens(data);
+      localStorage.setItem('access_token', tokens.access);
+      localStorage.setItem('refresh_token', tokens.refresh);
       window.dispatchEvent(new Event('auth-updated'));
       setUser(data.user);
       return { error: null };
@@ -283,8 +304,9 @@ export const useAuth = () => {
         return { error: null };
       }
       if (response.data?.tokens) {
-        localStorage.setItem('access_token', response.data.tokens.access);
-        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        const tokens = getAuthTokens(response.data);
+        localStorage.setItem('access_token', tokens.access);
+        localStorage.setItem('refresh_token', tokens.refresh);
         setUser(response.data.user);
         return { error: null };
       }

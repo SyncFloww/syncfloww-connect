@@ -14,13 +14,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   Plus, Building2, Edit2, Trash2, BarChart3, UploadCloud,
-  CalendarDays, Globe, Users, Megaphone, Link as LinkIcon,
+  CalendarDays, Globe, Users, Megaphone, Link as LinkIcon, Share2,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import apiClient from '@/lib/apiClient';
 import BrandAnalyticsPanel from '@/components/BrandAnalyticsPanel';
 import BrandContentUpload from '@/components/BrandContentUpload';
 import BrandScheduleCalendar from '@/components/BrandScheduleCalendar';
+import SocialMediaConnectDialog from '@/components/SocialMediaConnectDialog';
 
 interface Brand {
   id: string;
@@ -35,6 +36,16 @@ interface Brand {
   voice?: string;
   target_audience?: string;
   niche?: string;
+}
+
+interface SocialAccount {
+  id: string;
+  brand?: string;
+  platform: string;
+  username: string;
+  display_name?: string;
+  profile_image_url?: string;
+  is_active: boolean;
 }
 
 const INDUSTRY_OPTIONS = [
@@ -88,17 +99,20 @@ export default function BrandManagement() {
   const { refreshWorkspaces } = useWorkspace();
 
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [analyticsBrand, setAnalyticsBrand] = useState<Brand | null>(null);
   const [uploadBrand, setUploadBrand] = useState<Brand | null>(null);
   const [calendarBrand, setCalendarBrand] = useState<Brand | null>(null);
+  const [connectBrand, setConnectBrand] = useState<Brand | null>(null);
+
   const [formData, setFormData] = useState(DEFAULT_FORM);
 
   useEffect(() => {
-    // Wait for auth to finish loading before fetching — avoids false redirect
     if (authLoading) return;
     if (!user) { navigate('/auth', { replace: true }); return; }
     fetchBrands();
@@ -108,8 +122,19 @@ export default function BrandManagement() {
   const fetchBrands = async () => {
     try {
       setLoading(true);
-      const { data } = await apiClient.get('/api/social/brands/');
-      setBrands(Array.isArray(data) ? data : data?.results || []);
+      const [brandsRes, accountsRes] = await Promise.allSettled([
+        apiClient.get('/api/social/brands/'),
+        apiClient.get('/api/social/accounts/'),
+      ]);
+
+      if (brandsRes.status === 'fulfilled') {
+        const data = brandsRes.value.data;
+        setBrands(Array.isArray(data) ? data : data?.results || []);
+      }
+      if (accountsRes.status === 'fulfilled') {
+        const data = accountsRes.value.data;
+        setSocialAccounts(Array.isArray(data) ? data : data?.results || []);
+      }
     } catch {
       toast({ title: 'Unable to load brands', variant: 'destructive' });
     } finally {
@@ -144,15 +169,12 @@ export default function BrandManagement() {
     setIsSubmitting(true);
     try {
       if (editingBrand) {
-        // Update existing brand
         const { data } = await apiClient.patch(`/api/social/brands/${editingBrand.id}/`, formData);
         setBrands(prev => prev.map(b => b.id === editingBrand.id ? { ...b, ...data } : b));
         toast({ title: '✅ Brand updated!' });
       } else {
-        // Create brand — backend auto-creates the workspace
         const { data } = await apiClient.post('/api/social/brands/', formData);
         setBrands(prev => [data, ...prev]);
-        // Refresh workspaces in context so sidebar/switcher picks up the new one
         await refreshWorkspaces();
         toast({ title: '🎉 Brand created!', description: `"${data.name}" is ready.` });
       }
@@ -182,10 +204,13 @@ export default function BrandManagement() {
     }
   };
 
-  // ── The create/edit form (shared) ─────────────────────────────────────────
+  const getBrandAccounts = (brandId: string) => {
+    return socialAccounts.filter(acc => String(acc.brand) === String(brandId));
+  };
+
+  // ── Form JSX ─────────────────────────────────────────────────────────────
   const BrandForm = (
     <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-      {/* Name */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-name">
           Brand Name <span className="text-destructive">*</span>
@@ -204,7 +229,6 @@ export default function BrandManagement() {
         )}
       </div>
 
-      {/* Description */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-desc">Description</Label>
         <Textarea
@@ -216,7 +240,6 @@ export default function BrandManagement() {
         />
       </div>
 
-      {/* Website */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-website">Website</Label>
         <div className="relative">
@@ -232,7 +255,6 @@ export default function BrandManagement() {
         </div>
       </div>
 
-      {/* Logo URL */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-logo">Logo URL</Label>
         <div className="relative">
@@ -247,7 +269,6 @@ export default function BrandManagement() {
         </div>
       </div>
 
-      {/* Industry */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-industry">Industry</Label>
         <select
@@ -261,7 +282,6 @@ export default function BrandManagement() {
         </select>
       </div>
 
-      {/* Niche */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-niche">Niche / Sub-category</Label>
         <Input
@@ -272,7 +292,6 @@ export default function BrandManagement() {
         />
       </div>
 
-      {/* Target Audience */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-audience" className="flex items-center gap-1">
           <Users className="w-3.5 h-3.5" /> Target Audience
@@ -285,7 +304,6 @@ export default function BrandManagement() {
         />
       </div>
 
-      {/* Brand Voice */}
       <div className="space-y-1.5">
         <Label htmlFor="brand-voice" className="flex items-center gap-1">
           <Megaphone className="w-3.5 h-3.5" /> Brand Voice
@@ -316,7 +334,6 @@ export default function BrandManagement() {
     </form>
   );
 
-  // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="space-y-6">
@@ -354,7 +371,7 @@ export default function BrandManagement() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Brands</h1>
           <p className="text-muted-foreground text-sm">
-            Each brand has its own workspace, analytics, and content pipeline.
+            Manage your brand identities and connected social accounts.
           </p>
         </div>
 
@@ -386,7 +403,7 @@ export default function BrandManagement() {
             <h3 className="text-lg font-semibold mb-2">No brands yet</h3>
             <p className="text-muted-foreground text-sm mb-6 max-w-xs">
               Create your first brand to start generating content, tracking analytics,
-              and scheduling posts. A workspace is created for you automatically.
+              and connecting social accounts.
             </p>
             <Button id="create-first-brand-btn" onClick={() => handleOpenDialog()} className="gap-2">
               <Plus className="w-4 h-4" /> Create Your First Brand
@@ -395,84 +412,134 @@ export default function BrandManagement() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {brands.map(brand => (
-            <Card
-              key={brand.id}
-              className="group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border hover:border-primary/30"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <BrandAvatar brand={brand} />
-                    <div className="min-w-0">
-                      <CardTitle className="text-base truncate">{brand.name}</CardTitle>
-                      {brand.industry && (
-                        <Badge variant="secondary" className="text-xs mt-0.5">{brand.industry}</Badge>
+          {brands.map(brand => {
+            const accounts = getBrandAccounts(brand.id);
+            return (
+              <Card
+                key={brand.id}
+                className="group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border hover:border-primary/30 flex flex-col justify-between"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <BrandAvatar brand={brand} />
+                      <div className="min-w-0">
+                        <CardTitle className="text-base truncate">{brand.name}</CardTitle>
+                        {brand.industry && (
+                          <Badge variant="secondary" className="text-xs mt-0.5">{brand.industry}</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Connect Accounts"
+                        onClick={() => setConnectBrand(brand)}>
+                        <Share2 className="w-4 h-4 text-primary" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Insights"
+                        onClick={() => setAnalyticsBrand(brand)}>
+                        <BarChart3 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Schedule"
+                        onClick={() => setCalendarBrand(brand)}>
+                        <CalendarDays className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Upload content"
+                        onClick={() => setUploadBrand(brand)}>
+                        <UploadCloud className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit"
+                        onClick={() => handleOpenDialog(brand)}>
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive" title="Delete"
+                        onClick={() => handleDelete(brand.id, brand.name)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0 space-y-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    {brand.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{brand.description}</p>
+                    )}
+                    {brand.website && (
+                      <a
+                        href={brand.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mb-2"
+                      >
+                        <Globe className="w-3 h-3 shrink-0" />
+                        {brand.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {brand.voice && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-primary/8 text-primary px-2 py-0.5 rounded-full">
+                          <Megaphone className="w-3 h-3" />{brand.voice}
+                        </span>
+                      )}
+                      {brand.target_audience && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-full truncate max-w-[160px]">
+                          <Users className="w-3 h-3 shrink-0" />{brand.target_audience}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions — visible on hover */}
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Insights"
-                      onClick={() => setAnalyticsBrand(brand)}>
-                      <BarChart3 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Schedule"
-                      onClick={() => setCalendarBrand(brand)}>
-                      <CalendarDays className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Upload content"
-                      onClick={() => setUploadBrand(brand)}>
-                      <UploadCloud className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit"
-                      onClick={() => handleOpenDialog(brand)}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive" title="Delete"
-                      onClick={() => handleDelete(brand.id, brand.name)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
+                  {/* Connected Accounts Section */}
+                  <div className="pt-3 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Connected Channels ({accounts.length})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setConnectBrand(brand)}
+                        className="h-6 px-2 text-xs text-primary gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> Connect
+                      </Button>
+                    </div>
 
-              <CardContent className="pt-0 space-y-2">
-                {brand.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{brand.description}</p>
-                )}
-                {brand.website && (
-                  <a
-                    href={brand.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-                  >
-                    <Globe className="w-3 h-3 shrink-0" />
-                    {brand.website.replace(/^https?:\/\//, '')}
-                  </a>
-                )}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {brand.voice && (
-                    <span className="inline-flex items-center gap-1 text-xs bg-primary/8 text-primary px-2 py-0.5 rounded-full">
-                      <Megaphone className="w-3 h-3" />{brand.voice}
-                    </span>
-                  )}
-                  {brand.target_audience && (
-                    <span className="inline-flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-full truncate max-w-[160px]">
-                      <Users className="w-3 h-3 shrink-0" />{brand.target_audience}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    {accounts.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">No channels linked yet</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {accounts.map(acc => (
+                          <Badge key={acc.id} variant="outline" className="text-xs py-0.5 px-2 flex items-center gap-1 bg-muted/30">
+                            <span className="capitalize font-medium text-foreground">{acc.platform}</span>
+                            <span className="text-muted-foreground">({acc.username})</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Dialogs */}
+      {/* Connect Social Accounts Modal */}
+      {connectBrand && (
+        <SocialMediaConnectDialog
+          open={!!connectBrand}
+          onOpenChange={open => !open && setConnectBrand(null)}
+          brandName={connectBrand.name}
+          brandId={connectBrand.id}
+          onConnected={fetchBrands}
+        />
+      )}
+
+      {/* Analytics Dialog */}
       <Dialog open={!!analyticsBrand} onOpenChange={open => !open && setAnalyticsBrand(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Insights · {analyticsBrand?.name}</DialogTitle></DialogHeader>
@@ -480,6 +547,7 @@ export default function BrandManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Upload Dialog */}
       <Dialog open={!!uploadBrand} onOpenChange={open => !open && setUploadBrand(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Upload Content · {uploadBrand?.name}</DialogTitle></DialogHeader>
@@ -487,6 +555,7 @@ export default function BrandManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Calendar Dialog */}
       <Dialog open={!!calendarBrand} onOpenChange={open => !open && setCalendarBrand(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Schedule · {calendarBrand?.name}</DialogTitle></DialogHeader>

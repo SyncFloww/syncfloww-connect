@@ -16,10 +16,15 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const workspaceId = localStorage.getItem('current_workspace_id') || localStorage.getItem('workspace_id');
+    if (workspaceId) {
+      config.headers['X-Workspace-ID'] = workspaceId;
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
+
 
 // Response interceptor for token refresh and CORS error handling
 apiClient.interceptors.response.use(

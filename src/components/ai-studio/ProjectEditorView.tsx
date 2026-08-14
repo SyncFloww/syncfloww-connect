@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Layers, Sparkles, Film, Mic, Image as ImageIcon, Subtitles, Download, Share2 } from 'lucide-react';
-import { AIContentProject } from '@/services/aiStudioService';
+import { Layers, Sparkles, Film, Mic, Subtitles, Download, Calendar } from 'lucide-react';
+import { AIContentProject, aiStudioApi } from '@/services/aiStudioService';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectEditorViewProps {
   project: AIContentProject | null;
 }
 
 export const ProjectEditorView: React.FC<ProjectEditorViewProps> = ({ project }) => {
+  const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const [exportedUrl, setExportedUrl] = useState<string | null>(project?.export_url || null);
 
   const handleExport = () => {
@@ -21,6 +22,33 @@ export const ProjectEditorView: React.FC<ProjectEditorViewProps> = ({ project })
       setExporting(false);
       setExportedUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
     }, 2500);
+  };
+
+  const handleScheduleVideo = async () => {
+    if (!exportedUrl || !project) return;
+    setScheduling(true);
+    try {
+      await aiStudioApi.schedulePost({
+        title: project.title,
+        content: `Watch ${project.title} - AI Generated Video Composition`,
+        media_urls: [exportedUrl],
+        platforms: [project.target_platform || 'instagram'],
+        scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+      });
+      toast({
+        title: 'Video Scheduled!',
+        description: `Exported video project has been scheduled for publication.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Scheduling Failed',
+        description: 'Failed to schedule video post.',
+      });
+    } finally {
+      setScheduling(false);
+    }
   };
 
   if (!project) {
@@ -49,7 +77,6 @@ export const ProjectEditorView: React.FC<ProjectEditorViewProps> = ({ project })
           </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Timeline composition visual representation */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Multi-Track Composition Timeline</h4>
 
@@ -81,11 +108,16 @@ export const ProjectEditorView: React.FC<ProjectEditorViewProps> = ({ project })
             <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase text-fuchsia-600">Rendered Social Export MP4</span>
-                <Button variant="outline" size="sm" asChild className="gap-1">
-                  <a href={exportedUrl} download target="_blank" rel="noreferrer">
-                    <Download className="w-4 h-4" /> Download Export
-                  </a>
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild className="gap-1">
+                    <a href={exportedUrl} download target="_blank" rel="noreferrer">
+                      <Download className="w-4 h-4" /> Download Export
+                    </a>
+                  </Button>
+                  <Button size="sm" onClick={handleScheduleVideo} disabled={scheduling} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                    <Calendar className="w-4 h-4" /> Schedule Video Post
+                  </Button>
+                </div>
               </div>
               <video src={exportedUrl} controls className="w-full max-h-80 rounded-lg border bg-black" />
             </div>

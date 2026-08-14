@@ -3,15 +3,18 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Share2, Sparkles, Copy, Check, Bookmark, CheckCircle2 } from 'lucide-react';
+import { Share2, Sparkles, Copy, Check, CheckCircle2, Calendar } from 'lucide-react';
 import { aiStudioApi, AISocialContent } from '@/services/aiStudioService';
+import { useToast } from '@/hooks/use-toast';
 
 interface SocialContentConverterProps {
   scriptId?: number;
 }
 
 export const SocialContentConverterView: React.FC<SocialContentConverterProps> = ({ scriptId }) => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const [socialOutputs, setSocialOutputs] = useState<AISocialContent[]>([]);
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
@@ -25,6 +28,31 @@ export const SocialContentConverterView: React.FC<SocialContentConverterProps> =
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSchedule = async (platform: string, content: string) => {
+    setScheduling(true);
+    try {
+      await aiStudioApi.schedulePost({
+        title: `AI Studio Post (${platform})`,
+        content: content,
+        platforms: [platform],
+        scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+      });
+      toast({
+        title: 'Post Scheduled!',
+        description: `Your post for ${platform} has been added to the publishing queue.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Scheduling Failed',
+        description: 'Failed to schedule post to publishing system.',
+      });
+    } finally {
+      setScheduling(false);
     }
   };
 
@@ -80,10 +108,15 @@ export const SocialContentConverterView: React.FC<SocialContentConverterProps> =
                       <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-green-500" /> Saved to Content Library
                       </span>
-                      <Button variant="outline" size="sm" onClick={() => copyContent(captionText, p.key)} className="gap-1">
-                        {copiedTab === p.key ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                        {copiedTab === p.key ? 'Copied!' : 'Copy Copy'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => copyContent(captionText, p.key)} className="gap-1">
+                          {copiedTab === p.key ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedTab === p.key ? 'Copied!' : 'Copy Copy'}
+                        </Button>
+                        <Button size="sm" onClick={() => handleSchedule(p.key, captionText)} disabled={scheduling} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                          <Calendar className="w-3.5 h-3.5" /> Schedule & Publish
+                        </Button>
+                      </div>
                     </div>
 
                     <Textarea

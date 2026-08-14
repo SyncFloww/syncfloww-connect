@@ -193,5 +193,26 @@ export const aiStudioApi = {
   getUsageMetrics: async (): Promise<any> => {
     const { data } = await apiClient.get('/api/ai/usage/');
     return data;
+  },
+
+  // Media Library Integration
+  getMediaItems: async (): Promise<any[]> => {
+    const { data } = await apiClient.get('/api/media/items/');
+    return data.results || data || [];
+  },
+
+  // Content Library Integration
+  getContentItems: async (): Promise<any[]> => {
+    const { data } = await apiClient.get('/api/content/items/');
+    return data.results || data || [];
+  },
+
+  // Schedule & Publish Integration
+  schedulePost: async (payload: { title: string; content: string; media_urls?: string[]; scheduled_at?: string; platforms?: string[] }): Promise<any> => {
+    const { data } = await apiClient.post('/api/publishing/posts/', {
+      ...payload,
+      status: payload.scheduled_at ? 'scheduled' : 'draft',
+    });
+    return data;
   }
 };

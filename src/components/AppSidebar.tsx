@@ -27,9 +27,11 @@ import {
 } from '@/components/ui/sidebar';
 
 import { Target, Building2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const mainNavigation = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'AI Studio', url: '/ai-studio', icon: Sparkles },
   { title: 'Workflows', url: '/generate', icon: Workflow },
   { title: 'Campaigns', url: '/campaigns', icon: Target },
   { title: 'Brands', url: '/brands', icon: Building2 },
@@ -38,6 +40,7 @@ const mainNavigation = [
   { title: 'Referrals', url: '/referrals', icon: Gift },
   { title: 'Calendar', url: '/calendar', icon: Calendar },
 ];
+
 
 const toolsNavigation = [
   { title: 'Templates', url: '/templates', icon: FileText },

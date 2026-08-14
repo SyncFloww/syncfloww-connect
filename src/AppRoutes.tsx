@@ -23,8 +23,10 @@ import { InstallPrompt } from "./components/InstallPrompt";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import Onboarding from "./pages/Onboarding";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import AIStudioPage from "./pages/AIStudioPage";
 
 const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
+
 const QA_BYPASS_PATHS = ["/customers", "/brand-management", "/brands"];
 
 if (
@@ -90,8 +92,9 @@ function InnerRoutes() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/generate" element={<Generate />} />
-        <Route path="/ai-studio" element={<Generate />} />
+        <Route path="/generate" element={<AIStudioPage />} />
+        <Route path="/ai-studio" element={<AIStudioPage />} />
+        <Route path="/ai-studio/*" element={<AIStudioPage />} />
         <Route path="/my-projects" element={<MyProjects />} />
         <Route path="/content" element={<MyProjects />} />
         <Route path="/customers" element={<Customers />} />

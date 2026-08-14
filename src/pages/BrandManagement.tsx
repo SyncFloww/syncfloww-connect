@@ -504,20 +504,86 @@ export default function BrandManagement() {
                         onClick={() => setConnectBrand(brand)}
                         className="h-6 px-2 text-xs text-primary gap-1"
                       >
-                        <Plus className="w-3 h-3" /> Connect
+                        <Plus className="w-3 h-3" /> Connect Channel
                       </Button>
                     </div>
 
                     {accounts.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">No channels linked yet</p>
+                      <p className="text-xs text-muted-foreground italic">No social accounts connected yet</p>
                     ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {accounts.map(acc => (
-                          <Badge key={acc.id} variant="outline" className="text-xs py-0.5 px-2 flex items-center gap-1 bg-muted/30">
-                            <span className="capitalize font-medium text-foreground">{acc.platform}</span>
-                            <span className="text-muted-foreground">({acc.username})</span>
-                          </Badge>
-                        ))}
+                      <div className="space-y-2">
+                        {accounts.map(acc => {
+                          const statusColor = acc.status === 'ACTIVE' 
+                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                            : acc.status === 'EXPIRED' || acc.status === 'REAUTH_REQUIRED'
+                            ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                            : 'bg-red-500/10 text-red-600 border-red-500/20';
+
+                          return (
+                            <div key={acc.id} className="p-2.5 rounded-lg border bg-muted/20 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {acc.profile_image_url ? (
+                                  <img src={acc.profile_image_url} alt={acc.username} className="w-7 h-7 rounded-full object-cover border shrink-0" />
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary shrink-0">
+                                    {acc.platform[0]?.toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-semibold capitalize text-foreground truncate">{acc.platform}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded border font-semibold ${statusColor}`}>
+                                      {acc.status || 'ACTIVE'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground truncate">@{acc.username}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-1.5 text-[10px]"
+                                  title="Test Connection"
+                                  onClick={async () => {
+                                    try {
+                                      const { data } = await apiClient.post(`/api/social/accounts/${acc.id}/verify/`);
+                                      toast({
+                                        title: data.is_valid ? 'Connection Healthy ✅' : 'Verification Issue ⚠️',
+                                        description: data.message,
+                                        variant: data.is_valid ? 'default' : 'destructive',
+                                      });
+                                      fetchBrands();
+                                    } catch (err: any) {
+                                      toast({ title: 'Verification Failed', description: err.response?.data?.error || 'Failed to verify connection', variant: 'destructive' });
+                                    }
+                                  }}
+                                >
+                                  Test
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                                  title="Disconnect Account"
+                                  onClick={async () => {
+                                    if (!confirm(`Disconnect @${acc.username} (${acc.platform}) from ${brand.name}?`)) return;
+                                    try {
+                                      await apiClient.post(`/api/social/accounts/${acc.id}/disconnect/`);
+                                      toast({ title: 'Account Disconnected' });
+                                      fetchBrands();
+                                    } catch (err: any) {
+                                      toast({ title: 'Failed to Disconnect', description: err.response?.data?.error || 'Could not disconnect account', variant: 'destructive' });
+                                    }
+                                  }}
+                                >
+                                  Disconnect
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

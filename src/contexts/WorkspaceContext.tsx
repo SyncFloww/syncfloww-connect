@@ -37,7 +37,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const items = (Array.isArray(data) ? data : data.results).map((workspace) => ({ ...workspace, id: String(workspace.id) }));
       setWorkspaces(items);
       const savedId = localStorage.getItem(STORAGE_KEY);
-      setCurrentWorkspace(items.find((workspace) => workspace.id === savedId) ?? items[0] ?? null);
+      const selected = items.find((workspace) => workspace.id === savedId) ?? items[0] ?? null;
+      setCurrentWorkspace(selected);
+      if (selected) localStorage.setItem(STORAGE_KEY, selected.id);
+      else localStorage.removeItem(STORAGE_KEY);
     } finally {
       setLoading(false);
     }

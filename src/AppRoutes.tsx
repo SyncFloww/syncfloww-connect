@@ -23,7 +23,8 @@ import { InstallPrompt } from "./components/InstallPrompt";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import Onboarding from "./pages/Onboarding";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import AIStudioPage from "./pages/AIStudioPage";
+import AIStudioPage from "./pages/ScriptWorkspace";
+import BrandWorkspace from "./pages/BrandWorkspace";
 
 const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
 
@@ -91,12 +92,13 @@ function InnerRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/assistant" element={<BrandWorkspace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/generate" element={<AIStudioPage />} />
         <Route path="/ai-studio" element={<AIStudioPage />} />
         <Route path="/ai-studio/*" element={<AIStudioPage />} />
-        <Route path="/my-projects" element={<MyProjects />} />
-        <Route path="/content" element={<MyProjects />} />
+        <Route path="/my-projects" element={<AIStudioPage />} />
+        <Route path="/content" element={<AIStudioPage />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/referrals" element={<Referral />} />
         <Route path="/calendar" element={<DashboardPage />} />

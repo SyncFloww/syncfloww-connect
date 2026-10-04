@@ -1,3 +1,6 @@
+import api from '@/lib/apiClient';
+import { VoiceInput } from '@/features/core/VoiceInput';
+import { friendlyError } from './BrandWorkspace';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, MessageCircle, Sparkles } from 'lucide-react';
@@ -24,6 +27,15 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
+  const [helping, setHelping] = useState(false);
+  const [help, setHelp] = useState<{ reply: string; suggested_answer: string } | null>(null);
+  useEffect(() => { setHelp(null); }, [brandId, index]);
+  async function askForHelp() {
+    if (!interview || helping) return;
+    setHelping(true); setError('');
+    try { const { data } = await api.post(`/api/social/brands/${brandId}/assistant/`, { message: 'Help me answer this brand interview question. Offer concrete options and ask a follow-up if needed.', mode: 'question', question: interview.questions[index].key, draft: answer }); setHelp(data); }
+    catch (e) { setError(friendlyError(e)); } finally { setHelping(false); }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +108,7 @@ export default function Onboarding() {
     finally { setSaving(false); }
   };
 
-  const busy = saving || loading || workspaceLoading;
+  const busy = saving || loading || workspaceLoading || helping;
   const question = interview?.questions[index];
   return <main className="min-h-screen bg-background px-4 py-10"><div className="mx-auto max-w-2xl space-y-6">
     <header className="space-y-3 text-center"><img src="/Icon.png" alt="Syncflow" className="mx-auto h-12 w-12" /><h1 className="text-3xl font-bold">Let’s get to know your brand</h1><p className="text-muted-foreground">A guided conversation to give your content direction. Your answers save as you continue.</p></header>
@@ -108,7 +120,7 @@ export default function Onboarding() {
     {(loading || workspaceLoading) && <p role="status" className="text-center">Loading your saved setup…</p>}
     {!workspaceLoading && !loading && !interview && !error && (!currentWorkspace || !brands.length) && <Card><CardHeader><CardTitle>{currentWorkspace ? 'Your first brand' : 'Your workspace'}</CardTitle></CardHeader><CardContent><form onSubmit={create} className="space-y-4"><Label htmlFor="setup-name">{currentWorkspace ? 'What is your brand’s name?' : 'What should we call your workspace?'}</Label><Input id="setup-name" required maxLength={255} value={name} onChange={(e) => setName(e.target.value)} />{currentWorkspace && <p className="text-sm text-muted-foreground">We’ll save this brand in {currentWorkspace.name}.</p>}<Button disabled={busy} type="submit">{saving ? 'Saving…' : 'Continue'}</Button></form></CardContent></Card>}
     {interview && !loading && !review && question && <Card><CardHeader><p className="text-sm text-muted-foreground">Question {index + 1} of {interview.questions.length} · Guided brand setup</p><CardTitle className="flex items-start gap-3"><MessageCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />{question.title}</CardTitle></CardHeader><CardContent><form className="space-y-5" onSubmit={(e) => { e.preventDefault(); void saveAnswer(index + 1); }}>
-      <p id="answer-hint" className="text-sm text-muted-foreground">{question.hint}</p><Label htmlFor="brand-answer">Your answer {question.required ? '(required)' : '(optional)'}</Label><Textarea key={question.key} id="brand-answer" autoFocus rows={6} aria-describedby="answer-hint" required={question.required} maxLength={['tone', 'goal'].includes(question.key) ? 255 : 2000} value={answer} onChange={(e) => setAnswer(e.target.value)} disabled={saving} /><p className="text-sm text-muted-foreground">Not sure yet? Write your best starting point. You can edit it before finishing.</p>
+      <p id="answer-hint" className="text-sm text-muted-foreground">{question.hint}</p><Label htmlFor="brand-answer">Your answer {question.required ? '(required)' : '(optional)'}</Label><Textarea key={question.key} id="brand-answer" autoFocus rows={6} aria-describedby="answer-hint" required={question.required} maxLength={['tone', 'goal'].includes(question.key) ? 255 : 2000} value={answer} onChange={(e) => setAnswer(e.target.value)} disabled={busy} /><VoiceInput key={brandId + question.key} disabled={busy} onText={text => setAnswer(old => (old + " " + text).trim().slice(0, ["tone", "goal"].includes(question.key) ? 255 : 2000))} /><Button type="button" variant="outline" disabled={busy} onClick={() => void askForHelp()}>{helping ? "Thinking…" : "Help me shape this answer"}</Button>{help && <div className="rounded-lg border p-4 space-y-3"><p className="whitespace-pre-wrap text-sm">{help.reply}</p>{help.suggested_answer && <><p className="whitespace-pre-wrap text-sm text-muted-foreground">Suggested answer: {help.suggested_answer}</p><Button type="button" disabled={busy} onClick={() => { setAnswer(help.suggested_answer); setHelp(null); }}>Use this draft</Button></>}<p className="text-xs text-muted-foreground">Review any suggested facts before saving. Your saved brand details and this draft are shared with the AI provider.</p></div>}<p className="text-sm text-muted-foreground">Not sure yet? Write your best starting point. You can edit it before finishing.</p>
       <div className="flex justify-between gap-3"><Button type="button" variant="outline" disabled={busy || index === 0} onClick={() => void saveAnswer(index - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy}>{saving ? 'Saving…' : index === interview.questions.length - 1 ? 'Review brand' : 'Save and continue'}<ArrowRight className="ml-2 h-4 w-4" /></Button></div>
     </form></CardContent></Card>}
     {interview && !loading && review && <Card><CardHeader><CardTitle className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" />Review your brand</CardTitle><p className="text-sm text-muted-foreground">Your scripts will use these details. Check that everything is accurate.</p></CardHeader><CardContent className="space-y-5">{interview.questions.map((q, i) => <section key={q.key} className="border-b pb-4"><div className="flex justify-between gap-3"><h2 className="font-medium">{q.title}</h2><Button size="sm" variant="ghost" disabled={busy} aria-label={`Edit: ${q.title}`} onClick={() => { setIndex(i); setAnswer(interview.answers[q.key] || ''); setReview(false); setError(''); }}>Edit</Button></div><p className="whitespace-pre-wrap text-sm text-muted-foreground">{interview.answers[q.key] || (q.required ? 'An answer is needed.' : 'Not specified')}</p></section>)}<Button className="w-full" disabled={busy || interview.missing.length > 0} onClick={() => void finish()}><Sparkles className="mr-2 h-4 w-4" />{saving ? 'Saving…' : 'Save brand and create a script'}</Button></CardContent></Card>}

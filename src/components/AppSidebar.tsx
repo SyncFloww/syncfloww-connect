@@ -31,22 +31,12 @@ import { Sparkles } from 'lucide-react';
 
 const mainNavigation = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'AI Studio', url: '/ai-studio', icon: Sparkles },
-  { title: 'Workflows', url: '/generate', icon: Workflow },
-  { title: 'Campaigns', url: '/campaigns', icon: Target },
+  { title: 'Brand assistant', url: '/assistant', icon: Bot },
+  { title: 'Scripts & library', url: '/ai-studio', icon: FileText },
   { title: 'Brands', url: '/brands', icon: Building2 },
-  { title: 'My Projects', url: '/my-projects', icon: FolderOpen },
   { title: 'Customers', url: '/customers', icon: Users },
-  { title: 'Referrals', url: '/referrals', icon: Gift },
-  { title: 'Calendar', url: '/calendar', icon: Calendar },
 ];
-
-
-const toolsNavigation = [
-  { title: 'Templates', url: '/templates', icon: FileText },
-  { title: 'AI Tools', url: '/ai-tools', icon: Bot },
-  { title: 'Analytics', url: '/analytics', icon: BarChart3 },
-];
+const toolsNavigation: typeof mainNavigation = [];
 
 const adminNavigation = [
   { title: 'Settings', url: '/settings', icon: Settings },
@@ -73,7 +63,7 @@ export function AppSidebar() {
               }
             `}
           >
-            <NavLink to={item.url} className="flex items-center gap-3 w-full">
+            <NavLink aria-label={item.title} to={item.url} className="flex items-center gap-3 w-full">
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {!isCollapsed && (
                 <>
@@ -116,7 +106,7 @@ export function AppSidebar() {
 
         {/* Tools */}
         <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel className="text-xs text-muted-foreground uppercase tracking-wider">Tools</SidebarGroupLabel>}
+          {!isCollapsed && <SidebarGroupLabel className="hidden">Tools</SidebarGroupLabel>}
           <SidebarGroupContent>
             {renderNavItems(toolsNavigation)}
           </SidebarGroupContent>

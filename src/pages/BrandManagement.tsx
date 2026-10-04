@@ -39,6 +39,7 @@ interface Brand {
 }
 
 interface SocialAccount {
+  status?: string;
   id: string;
   brand?: string;
   platform: string;

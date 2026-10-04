@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    const workspaceId = localStorage.getItem('current_workspace_id') || localStorage.getItem('workspace_id');
+    const workspaceId = localStorage.getItem('syncfloww.currentWorkspace') || localStorage.getItem('current_workspace_id') || localStorage.getItem('workspace_id');
     if (workspaceId) {
       config.headers['X-Workspace-ID'] = workspaceId;
     }

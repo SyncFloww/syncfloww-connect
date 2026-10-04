@@ -18,14 +18,14 @@ export const brandsListQuery = (workspaceId: string) =>
 export const brandQuery = (workspaceId: string, id: string) =>
   queryOptions({
     queryKey: brandKeys.detail(workspaceId, id),
-    queryFn: () => brandsApi.get(workspaceId, id),
+    queryFn: () => brandsApi.get(id),
     enabled: Boolean(workspaceId) && Boolean(id),
   });
 
 export function useCreateBrand(workspaceId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Brand>) => brandsApi.create(workspaceId, payload),
+    mutationFn: (payload: { name: string } & Partial<Brand>) => brandsApi.create({ ...payload, workspace: workspaceId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: brandKeys.list(workspaceId) }),
   });
 }
@@ -34,7 +34,7 @@ export function useUpdateBrand(workspaceId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<Brand> }) =>
-      brandsApi.update(workspaceId, id, payload),
+      brandsApi.update(id, payload),
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: brandKeys.list(workspaceId) });
       qc.invalidateQueries({ queryKey: brandKeys.detail(workspaceId, vars.id) });
@@ -45,7 +45,7 @@ export function useUpdateBrand(workspaceId: string) {
 export function useDeleteBrand(workspaceId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => brandsApi.remove(workspaceId, id),
+    mutationFn: (id: string) => brandsApi.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: brandKeys.list(workspaceId) }),
   });
 }

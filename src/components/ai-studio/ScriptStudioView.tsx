@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Sparkles, Wand2, History, Share2, Copy, Save, Check } from 'lucide-react';
 import { aiStudioApi, AIScript } from '@/services/aiStudioService';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { useQuery } from '@tanstack/react-query';
+import { brandsListQuery } from '@/features/brands/queries';
 
 interface ScriptStudioViewProps {
   initialTopic?: string;
@@ -21,21 +24,33 @@ export const ScriptStudioView: React.FC<ScriptStudioViewProps> = ({ initialTopic
   const [duration, setDuration] = useState(30);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+  const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace ? String(currentWorkspace.id) : '';
+  const { data: brands = [], isLoading: brandsLoading } = useQuery(brandsListQuery(workspaceId));
+  const [chosenBrand, setChosenBrand] = useState('');
+  const storedBrand = workspaceId ? localStorage.getItem('syncflow-active-brand-' + workspaceId) : null;
+  const brandId = [chosenBrand, storedBrand].find((id) => brands.some((brand) => String(brand.id) === id)) || (brands[0] ? String(brands[0].id) : '');
 
   const [activeScript, setActiveScript] = useState<AIScript | null>(null);
 
   const handleGenerateScript = async () => {
-    if (!topic) return;
+    if (!topic.trim() || loading) return;
+    if (!brandId || !workspaceId) { setError('Set up a brand before generating a script.'); return; }
     setLoading(true);
+    setError('');
     try {
       const script = await aiStudioApi.generateScript({
         topic,
         platform,
         tone,
         duration,
+        brand: Number(brandId),
+        workspace: Number(workspaceId),
       });
       setActiveScript(script);
     } catch (e) {
+      setError('Script generation is unavailable. Please try again shortly. Your saved brand details are safe.');
       console.error('Failed to generate script:', e);
     } finally {
       setLoading(false);
@@ -84,6 +99,11 @@ export const ScriptStudioView: React.FC<ScriptStudioViewProps> = ({ initialTopic
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && <p role="alert" className="rounded-md border border-destructive p-3 text-sm">{error}</p>}
+          <div className="space-y-2"><Label htmlFor="script-brand">Brand context</Label><select id="script-brand" className="w-full rounded-md border bg-background p-2" value={brandId} disabled={loading || brandsLoading} onChange={(event) => { setChosenBrand(event.target.value); setActiveScript(null); }}>
+            {!brands.length && <option value="">Set up your brand first</option>}
+            {brands.map((brand) => <option key={brand.id} value={String(brand.id)}>{brand.name}</option>)}
+          </select><a href="/onboarding" className="text-sm text-primary underline">Review brand details</a></div>
           <div className="space-y-2">
             <Label>Video Topic / Prompt</Label>
             <Input

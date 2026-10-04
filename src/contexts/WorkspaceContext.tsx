@@ -33,10 +33,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const { data } = await apiClient.get<Workspace[]>("/api/workspaces/");
-      setWorkspaces(data);
+      const { data } = await apiClient.get<Workspace[] | { results: Workspace[] }>("/api/workspaces/");
+      const items = (Array.isArray(data) ? data : data.results).map((workspace) => ({ ...workspace, id: String(workspace.id) }));
+      setWorkspaces(items);
       const savedId = localStorage.getItem(STORAGE_KEY);
-      setCurrentWorkspace(data.find((workspace) => workspace.id === savedId) ?? data[0] ?? null);
+      setCurrentWorkspace(items.find((workspace) => workspace.id === savedId) ?? items[0] ?? null);
     } finally {
       setLoading(false);
     }
@@ -55,9 +56,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const createWorkspace = async (name: string, slug: string) => {
     const { data } = await apiClient.post<Workspace>("/api/workspaces/", { name, slug });
-    setWorkspaces((existing) => [...existing, data]);
-    selectWorkspace(data);
-    return data;
+    const workspace = { ...data, id: String(data.id) };
+    setWorkspaces((existing) => [...existing, workspace]);
+    selectWorkspace(workspace);
+    return workspace;
   };
 
   return <WorkspaceContext.Provider value={{ workspaces, currentWorkspace, loading, selectWorkspace, createWorkspace, refreshWorkspaces }}>{children}</WorkspaceContext.Provider>;

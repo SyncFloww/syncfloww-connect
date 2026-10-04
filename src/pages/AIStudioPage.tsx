@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAIStudio } from '@/hooks/useAIStudio';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -21,7 +22,8 @@ import { GenerationHistoryView } from '@/components/ai-studio/GenerationHistoryV
 
 export default function AIStudioPage() {
   const { projects, activeProject, setActiveProject, jobs, scripts, refreshData } = useAIStudio();
-  const [activeTab, setActiveTab] = useState('wizard');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'script' ? 'script' : 'wizard');
   const [selectedScriptId, setSelectedScriptId] = useState<number | undefined>(undefined);
   const [scriptTopic, setScriptTopic] = useState('');
 
@@ -55,7 +57,7 @@ export default function AIStudioPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold tracking-tight">Syncfloww AI Media Studio</h1>
-            <Badge className="bg-primary/10 text-primary border-primary/20">Production Ready</Badge>
+            <Badge className="bg-primary/10 text-primary border-primary/20">MVP Preview</Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Unified AI Generation & Media Creation Platform • Workspace Isolated

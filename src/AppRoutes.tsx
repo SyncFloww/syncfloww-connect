@@ -25,6 +25,7 @@ import Onboarding from "./pages/Onboarding";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import AIStudioPage from "./pages/ScriptWorkspace";
 import BrandWorkspace from "./pages/BrandWorkspace";
+import Ideas from "./pages/Ideas";
 
 const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
 
@@ -92,6 +93,7 @@ function InnerRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/ideas" element={<Ideas />} />
         <Route path="/assistant" element={<BrandWorkspace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/generate" element={<AIStudioPage />} />

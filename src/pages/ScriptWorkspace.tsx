@@ -1,6 +1,6 @@
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/apiClient';
 import { useCurrentBrand } from '@/features/core/useCurrentBrand';
@@ -19,6 +19,8 @@ export default function ScriptWorkspace() {
 function ScriptWorkspaceContent() {
   const { brands, brandId, workspaceId, choose, isError } = useCurrentBrand();
   const qc = useQueryClient();
+  const [params] = useSearchParams();
+  const opened = useRef('');
   const [topic, setTopic] = useState('');
   const [platform, setPlatform] = useState('instagram');
   const [duration, setDuration] = useState('30');
@@ -33,6 +35,12 @@ function ScriptWorkspaceContent() {
     const { data } = await api.get('/api/ai/scripts/', { params: { workspace: workspaceId, brand: brandId } });
     return (Array.isArray(data) ? data : data.results) as AIScript[];
   } });
+  useEffect(() => {
+    const id = params.get('script');
+    if (!id || opened.current === id) return;
+    const found = scripts.data?.find(item => String(item.id) === id);
+    if (found) { opened.current = id; setScript(found); }
+  }, [params, scripts.data]);
   async function generate(event: React.FormEvent) {
     event.preventDefault(); if (busy || !brandId || !topic.trim()) return;
     setBusy(true); setError(''); setFeedback('');

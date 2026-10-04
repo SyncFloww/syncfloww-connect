@@ -32,6 +32,7 @@ import { Sparkles } from 'lucide-react';
 const mainNavigation = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Brand assistant', url: '/assistant', icon: Bot },
+  { title: 'Ideas & approval', url: '/ideas', icon: Sparkles },
   { title: 'Scripts & library', url: '/ai-studio', icon: FileText },
   { title: 'Brands', url: '/brands', icon: Building2 },
   { title: 'Customers', url: '/customers', icon: Users },

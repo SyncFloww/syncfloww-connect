@@ -77,9 +77,13 @@ function BrandWorkspaceContent() {
   </div>;
 }
 export function friendlyError(error: unknown): string {
-  const value = error as { response?: { status?: number; data?: { detail?: string } | string[] } };
+  const value = error as { response?: { status?: number; data?: Record<string, unknown> | string[] } };
   const data = value.response?.data;
   if (Array.isArray(data)) return data.join(' ');
   if (data && typeof data === 'object' && typeof data.detail === 'string') return data.detail;
+  if (data && typeof data === 'object') {
+    const messages = Object.values(data).flatMap(item => typeof item === 'string' ? [item] : Array.isArray(item) ? item.filter(text => typeof text === 'string') : []);
+    if (messages.length) return messages.slice(0, 3).join(' ');
+  }
   return value.response?.status === 403 ? 'Your role does not allow this action.' : 'This request could not be completed. Please try again.';
 }

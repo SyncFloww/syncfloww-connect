@@ -30,6 +30,9 @@ export interface AIScriptVersion {
 }
 
 export interface AIScript {
+  review_status: 'DRAFT' | 'IN_REVIEW' | 'APPROVED';
+  approved_at: string | null;
+  updated_at: string;
   id: number;
   title: string;
   topic: string;

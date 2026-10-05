@@ -40,6 +40,7 @@ const mainNavigation = [
 const toolsNavigation: typeof mainNavigation = [];
 
 const adminNavigation = [
+  { title: 'Usage & limits', url: '/usage', icon: BarChart3 },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 

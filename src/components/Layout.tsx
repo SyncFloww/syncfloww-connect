@@ -31,19 +31,11 @@ export const Layout = () => {
               <SidebarTrigger />
 
               <h1 className="text-base sm:text-lg font-semibold text-foreground truncate">
-                {location.pathname === '/dashboard' && 'Dashboard'}
-                {location.pathname === '/my-projects' && 'My Projects'}
-                {location.pathname === '/generate' && 'Workflows'}
-                {location.pathname === '/idea-generator' && 'Idea Generator'}
-                {location.pathname === '/templates' && 'Templates'}
-                {location.pathname === '/ai-tools' && 'AI Tools'}
-                {location.pathname === '/settings' && 'Settings'}
-                {location.pathname === '/customers' && 'Customers'}
-                {location.pathname === '/calendar' && 'Calendar'}
-                {location.pathname === '/analytics' && 'Analytics'}
+                {({ '/dashboard': 'Dashboard', '/assistant': 'Brand assistant', '/ideas': 'Ideas & approval', '/ai-studio': 'Scripts & library', '/generate': 'Scripts & library', '/content': 'Scripts & library', '/my-projects': 'Scripts & library', '/brands': 'Brands', '/brand-management': 'Brands', '/customers': 'Customers', '/usage': 'Usage & limits', '/settings': 'Settings' } as Record<string, string>)[location.pathname] || 'Syncflow'}
               </h1>
               {currentWorkspace && (
                 <select
+                  aria-label="Workspace"
                   value={currentWorkspace.id}
                   onChange={(event) => {
                     const workspace = workspaces.find((item) => item.id === event.target.value);

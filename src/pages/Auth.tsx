@@ -544,26 +544,7 @@ export default function Auth() {
     <div className="flex items-center justify-center gap-6 my-4">
       <button
         type="button"
-        onClick={() => handleSocialLogin('facebook')}
-        disabled={isSubmitting}
-        className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center hover:bg-accent hover:scale-105 transition-all"
-      >
-        <svg className="w-7 h-7" fill="#1877F2" viewBox="0 0 24 24">
-          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => handleSocialLogin('apple')}
-        disabled={isSubmitting}
-        className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center hover:bg-accent hover:scale-105 transition-all"
-      >
-        <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
-        </svg>
-      </button>
-      <button
-        type="button"
+        aria-label="Continue with Google"
         onClick={() => handleSocialLogin('google')}
         disabled={isSubmitting}
         className="w-14 h-14 rounded-full border-2 border-border flex items-center justify-center hover:bg-accent hover:scale-105 transition-all"
@@ -697,27 +678,6 @@ export default function Auth() {
                 </div>
 
                 <SocialButtons />
-
-                {(import.meta.env.VITE_DEMO_EMAIL || import.meta.env.DEV) && (
-                  <button
-                    type="button"
-                    data-testid="use-demo-credentials"
-                    onClick={() => {
-                      const demoEmail = import.meta.env.VITE_DEMO_EMAIL || 'demo@syncfloww.com';
-                      const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || 'demo-password';
-                      setEmail(demoEmail);
-                      setPassword(demoPassword);
-                      validateEmail(demoEmail);
-                      toast({
-                        title: 'Demo credentials filled',
-                        description: 'Click Sign In to continue.',
-                      });
-                    }}
-                    className="mt-4 w-full text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline transition-colors"
-                  >
-                    Use demo credentials
-                  </button>
-                )}
 
                 <div className="flex items-center justify-between mt-6">
                   <div className="flex items-center gap-2">

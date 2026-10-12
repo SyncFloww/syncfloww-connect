@@ -18,10 +18,6 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import apiClient from '@/lib/apiClient';
-import BrandAnalyticsPanel from '@/components/BrandAnalyticsPanel';
-import BrandContentUpload from '@/components/BrandContentUpload';
-import BrandScheduleCalendar from '@/components/BrandScheduleCalendar';
-import SocialMediaConnectDialog from '@/components/SocialMediaConnectDialog';
 
 interface Brand {
   id: string;
@@ -38,16 +34,6 @@ interface Brand {
   niche?: string;
 }
 
-interface SocialAccount {
-  status?: string;
-  id: string;
-  brand?: string;
-  platform: string;
-  username: string;
-  display_name?: string;
-  profile_image_url?: string;
-  is_active: boolean;
-}
 
 const INDUSTRY_OPTIONS = [
   'Technology', 'E-Commerce', 'Health & Wellness', 'Fashion & Apparel',
@@ -100,16 +86,11 @@ export default function BrandManagement() {
   const { refreshWorkspaces } = useWorkspace();
 
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [analyticsBrand, setAnalyticsBrand] = useState<Brand | null>(null);
-  const [uploadBrand, setUploadBrand] = useState<Brand | null>(null);
-  const [calendarBrand, setCalendarBrand] = useState<Brand | null>(null);
-  const [connectBrand, setConnectBrand] = useState<Brand | null>(null);
 
   const [formData, setFormData] = useState(DEFAULT_FORM);
 
@@ -123,19 +104,8 @@ export default function BrandManagement() {
   const fetchBrands = async () => {
     try {
       setLoading(true);
-      const [brandsRes, accountsRes] = await Promise.allSettled([
-        apiClient.get('/api/social/brands/'),
-        apiClient.get('/api/social/accounts/'),
-      ]);
-
-      if (brandsRes.status === 'fulfilled') {
-        const data = brandsRes.value.data;
-        setBrands(Array.isArray(data) ? data : data?.results || []);
-      }
-      if (accountsRes.status === 'fulfilled') {
-        const data = accountsRes.value.data;
-        setSocialAccounts(Array.isArray(data) ? data : data?.results || []);
-      }
+      const { data } = await apiClient.get('/api/social/brands/');
+      setBrands(Array.isArray(data) ? data : data?.results || []);
     } catch {
       toast({ title: 'Unable to load brands', variant: 'destructive' });
     } finally {
@@ -205,11 +175,7 @@ export default function BrandManagement() {
     }
   };
 
-  const getBrandAccounts = (brandId: string) => {
-    return socialAccounts.filter(acc => String(acc.brand) === String(brandId));
-  };
 
-  // ── Form JSX ─────────────────────────────────────────────────────────────
   const BrandForm = (
     <form onSubmit={handleSubmit} className="space-y-4 mt-2">
       <div className="space-y-1.5">
@@ -372,7 +338,7 @@ export default function BrandManagement() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Brands</h1>
           <p className="text-muted-foreground text-sm">
-            Manage your brand identities and connected social accounts.
+            Manage your brand identities, audience and voice.
           </p>
         </div>
 
@@ -403,8 +369,7 @@ export default function BrandManagement() {
             </div>
             <h3 className="text-lg font-semibold mb-2">No brands yet</h3>
             <p className="text-muted-foreground text-sm mb-6 max-w-xs">
-              Create your first brand to start generating content, tracking analytics,
-              and connecting social accounts.
+              Create your first brand to build ideas, scripts and a content plan.
             </p>
             <Button id="create-first-brand-btn" onClick={() => handleOpenDialog()} className="gap-2">
               <Plus className="w-4 h-4" /> Create Your First Brand
@@ -414,7 +379,6 @@ export default function BrandManagement() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {brands.map(brand => {
-            const accounts = getBrandAccounts(brand.id);
             return (
               <Card
                 key={brand.id}
@@ -433,23 +397,7 @@ export default function BrandManagement() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Connect Accounts"
-                        onClick={() => setConnectBrand(brand)}>
-                        <Share2 className="w-4 h-4 text-primary" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Insights"
-                        onClick={() => setAnalyticsBrand(brand)}>
-                        <BarChart3 className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Schedule"
-                        onClick={() => setCalendarBrand(brand)}>
-                        <CalendarDays className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Upload content"
-                        onClick={() => setUploadBrand(brand)}>
-                        <UploadCloud className="w-4 h-4" />
-                      </Button>
+                    <div className="flex gap-0.5 transition-opacity shrink-0">
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit"
                         onClick={() => handleOpenDialog(brand)}>
                         <Edit2 className="w-4 h-4" />
@@ -493,101 +441,7 @@ export default function BrandManagement() {
                     </div>
                   </div>
 
-                  {/* Connected Accounts Section */}
-                  <div className="pt-3 border-t">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Connected Channels ({accounts.length})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setConnectBrand(brand)}
-                        className="h-6 px-2 text-xs text-primary gap-1"
-                      >
-                        <Plus className="w-3 h-3" /> Connect Channel
-                      </Button>
-                    </div>
-
-                    {accounts.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">No social accounts connected yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {accounts.map(acc => {
-                          const statusColor = acc.status === 'ACTIVE' 
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                            : acc.status === 'EXPIRED' || acc.status === 'REAUTH_REQUIRED'
-                            ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                            : 'bg-red-500/10 text-red-600 border-red-500/20';
-
-                          return (
-                            <div key={acc.id} className="p-2.5 rounded-lg border bg-muted/20 flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {acc.profile_image_url ? (
-                                  <img src={acc.profile_image_url} alt={acc.username} className="w-7 h-7 rounded-full object-cover border shrink-0" />
-                                ) : (
-                                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary shrink-0">
-                                    {acc.platform[0]?.toUpperCase()}
-                                  </div>
-                                )}
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-semibold capitalize text-foreground truncate">{acc.platform}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded border font-semibold ${statusColor}`}>
-                                      {acc.status || 'ACTIVE'}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-muted-foreground truncate">@{acc.username}</p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-1 shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 px-1.5 text-[10px]"
-                                  title="Test Connection"
-                                  onClick={async () => {
-                                    try {
-                                      const { data } = await apiClient.post(`/api/social/accounts/${acc.id}/verify/`);
-                                      toast({
-                                        title: data.is_valid ? 'Connection Healthy ✅' : 'Verification Issue ⚠️',
-                                        description: data.message,
-                                        variant: data.is_valid ? 'default' : 'destructive',
-                                      });
-                                      fetchBrands();
-                                    } catch (err: any) {
-                                      toast({ title: 'Verification Failed', description: err.response?.data?.error || 'Failed to verify connection', variant: 'destructive' });
-                                    }
-                                  }}
-                                >
-                                  Test
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
-                                  title="Disconnect Account"
-                                  onClick={async () => {
-                                    if (!confirm(`Disconnect @${acc.username} (${acc.platform}) from ${brand.name}?`)) return;
-                                    try {
-                                      await apiClient.post(`/api/social/accounts/${acc.id}/disconnect/`);
-                                      toast({ title: 'Account Disconnected' });
-                                      fetchBrands();
-                                    } catch (err: any) {
-                                      toast({ title: 'Failed to Disconnect', description: err.response?.data?.error || 'Could not disconnect account', variant: 'destructive' });
-                                    }
-                                  }}
-                                >
-                                  Disconnect
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <Button variant="outline" onClick={() => navigate(`/onboarding?brand=${brand.id}`)}>Review brand setup</Button>
                 </CardContent>
               </Card>
             );
@@ -595,40 +449,6 @@ export default function BrandManagement() {
         </div>
       )}
 
-      {/* Connect Social Accounts Modal */}
-      {connectBrand && (
-        <SocialMediaConnectDialog
-          open={!!connectBrand}
-          onOpenChange={open => !open && setConnectBrand(null)}
-          brandName={connectBrand.name}
-          brandId={connectBrand.id}
-          onConnected={fetchBrands}
-        />
-      )}
-
-      {/* Analytics Dialog */}
-      <Dialog open={!!analyticsBrand} onOpenChange={open => !open && setAnalyticsBrand(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Insights · {analyticsBrand?.name}</DialogTitle></DialogHeader>
-          {analyticsBrand && <BrandAnalyticsPanel brandId={analyticsBrand.id} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* Upload Dialog */}
-      <Dialog open={!!uploadBrand} onOpenChange={open => !open && setUploadBrand(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Upload Content · {uploadBrand?.name}</DialogTitle></DialogHeader>
-          {uploadBrand && <BrandContentUpload brandId={uploadBrand.id} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* Calendar Dialog */}
-      <Dialog open={!!calendarBrand} onOpenChange={open => !open && setCalendarBrand(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Schedule · {calendarBrand?.name}</DialogTitle></DialogHeader>
-          {calendarBrand && <BrandScheduleCalendar brandId={calendarBrand.id} />}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

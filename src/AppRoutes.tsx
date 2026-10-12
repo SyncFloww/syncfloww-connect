@@ -7,17 +7,9 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
-import Generate from "./pages/Generate";
-import MyProjects from "./pages/MyProjects";
-import IdeaGenerator from "./pages/IdeaGenerator";
-import Templates from "./pages/Templates";
-import AITools from "./pages/AITools";
 import Settings from "./pages/Settings";
-import Welcome from "./pages/Welcome";
 import BrandManagement from "./pages/BrandManagement";
-import Campaigns from "./pages/Campaigns";
 import Customers from "./pages/Customers";
-import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
@@ -28,28 +20,8 @@ import BrandWorkspace from "./pages/BrandWorkspace";
 import Ideas from "./pages/Ideas";
 import Usage from "./pages/Usage";
 
-const QA_MODE = import.meta.env.VITE_QA_MODE === "true";
-
-const QA_BYPASS_PATHS = ["/customers", "/brand-management", "/brands"];
-
-if (
-  typeof window !== "undefined" &&
-  QA_MODE &&
-  import.meta.env.VITE_QA_TEST_TOKEN &&
-  !localStorage.getItem("access_token")
-) {
-  localStorage.setItem("access_token", import.meta.env.VITE_QA_TEST_TOKEN as string);
-}
-
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (
-    QA_MODE &&
-    typeof window !== "undefined" &&
-    QA_BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p))
-  ) {
-    return <>{children}</>;
-  }
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
@@ -79,14 +51,7 @@ function InnerRoutes() {
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-      <Route
-        path="/welcome"
-        element={
-          <ProtectedRoute>
-            <Welcome />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/welcome" element={<Navigate to="/onboarding" replace />} />
       <Route
         element={
           <ProtectedRoute>
@@ -104,13 +69,7 @@ function InnerRoutes() {
         <Route path="/my-projects" element={<AIStudioPage />} />
         <Route path="/content" element={<AIStudioPage />} />
         <Route path="/customers" element={<Customers />} />
-        <Route path="/referrals" element={<Referral />} />
-        <Route path="/calendar" element={<DashboardPage />} />
-        <Route path="/analytics" element={<DashboardPage />} />
-        <Route path="/templates" element={<Templates />} />
-        <Route path="/ai-tools" element={<AITools />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/brands" element={<BrandManagement />} />
         <Route path="/brand-management" element={<BrandManagement />} />
       </Route>

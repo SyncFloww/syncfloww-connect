@@ -2,7 +2,7 @@ import api from '@/lib/apiClient';
 import { VoiceInput } from '@/features/core/VoiceInput';
 import { friendlyError } from './BrandWorkspace';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, MessageCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,8 @@ import { brandInterview, type InterviewState } from '@/features/brands/onboardin
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedBrand = searchParams.get("brand");
   const { currentWorkspace, workspaces, selectWorkspace, createWorkspace, loading: workspaceLoading } = useWorkspace();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandId, setBrandId] = useState('');
@@ -43,11 +45,11 @@ export default function Onboarding() {
     if (!currentWorkspace) { setLoading(false); return; }
     setLoading(true);
     brandsApi.list(String(currentWorkspace.id)).then((items) => {
-      if (!cancelled) { setBrands(items); setBrandId(items.length ? String(items[0].id) : ''); }
+      if (!cancelled) { setBrands(items); setBrandId(String(items.find(item => String(item.id) === requestedBrand)?.id || items[0]?.id || '')); }
     }).catch(() => { if (!cancelled) setError('We could not load your brands. Try again.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [currentWorkspace?.id, reload]);
+  }, [currentWorkspace?.id, reload, requestedBrand]);
 
   useEffect(() => {
     let cancelled = false;

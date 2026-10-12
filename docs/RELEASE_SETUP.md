@@ -153,3 +153,19 @@ Live acceptance remains open:
 - [ ] Display-name updates persist; password change requires current password.
 - [ ] Brand export contains only the selected brand's core records, no credentials.
 - [ ] Viewer/member roles cannot approve scripts or download manager-only exports.
+
+## Frontend cleanup and deployment
+
+The active frontend uses Vite and React Router. Obsolete TanStack Start
+dependencies were removed to address Vercel's installation block. Deploy main
+with framework Vite, npm ci, npm run build and output directory dist.
+
+Legacy campaign, referral, templates, AI tools, calendar and analytics routes
+are removed. Brand cards no longer offer unimplemented social connections,
+insights, scheduling or media upload. Welcome routes to guided onboarding.
+Production QA authentication bypass has been removed; delete VITE_QA_TEST_TOKEN
+and VITE_DEMO_PASSWORD / VITE_DEMO_EMAIL from the frontend environment.
+Do not put database passwords or AI/provider secrets in VITE variables.
+Environment values do not select a frontend design; verify that the production
+deployment and domain point to the latest main commit after its build succeeds.
+These changes still require live acceptance.

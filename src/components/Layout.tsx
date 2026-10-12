@@ -31,7 +31,7 @@ export const Layout = () => {
               <SidebarTrigger />
 
               <h1 className="text-base sm:text-lg font-semibold text-foreground truncate">
-                {({ '/dashboard': 'Dashboard', '/assistant': 'Brand assistant', '/ideas': 'Ideas & approval', '/ai-studio': 'Scripts & library', '/generate': 'Scripts & library', '/content': 'Scripts & library', '/my-projects': 'Scripts & library', '/brands': 'Brands', '/brand-management': 'Brands', '/customers': 'Customers', '/usage': 'Usage & limits', '/settings': 'Settings' } as Record<string, string>)[location.pathname] || 'Syncflow'}
+                {({ '/social': 'Social accounts & posts', '/dashboard': 'Dashboard', '/assistant': 'Brand assistant', '/ideas': 'Ideas & approval', '/ai-studio': 'Scripts & library', '/generate': 'Scripts & library', '/content': 'Scripts & library', '/my-projects': 'Scripts & library', '/brands': 'Brands', '/brand-management': 'Brands', '/customers': 'Customers', '/usage': 'Usage & limits', '/settings': 'Settings' } as Record<string, string>)[location.pathname] || 'Syncflow'}
               </h1>
               {currentWorkspace && (
                 <select

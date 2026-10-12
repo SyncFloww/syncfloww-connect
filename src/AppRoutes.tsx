@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import AIStudioPage from "./pages/ScriptWorkspace";
 import BrandWorkspace from "./pages/BrandWorkspace";
 import Ideas from "./pages/Ideas";
+import SocialWorkspace, { SocialCallback } from './pages/SocialWorkspace';
 import Usage from "./pages/Usage";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -50,6 +51,7 @@ function InnerRoutes() {
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/social/callback" element={<ProtectedRoute><SocialCallback /></ProtectedRoute>} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route path="/welcome" element={<Navigate to="/onboarding" replace />} />
       <Route
@@ -59,6 +61,7 @@ function InnerRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/social" element={<SocialWorkspace />} />
         <Route path="/usage" element={<Usage />} />
         <Route path="/ideas" element={<Ideas />} />
         <Route path="/assistant" element={<BrandWorkspace />} />

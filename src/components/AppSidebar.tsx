@@ -34,6 +34,7 @@ const mainNavigation = [
   { title: 'Brand assistant', url: '/assistant', icon: Bot },
   { title: 'Ideas & approval', url: '/ideas', icon: Sparkles },
   { title: 'Scripts & library', url: '/ai-studio', icon: FileText },
+  { title: 'Social accounts & posts', url: '/social', icon: Workflow },
   { title: 'Brands', url: '/brands', icon: Building2 },
   { title: 'Customers', url: '/customers', icon: Users },
 ];

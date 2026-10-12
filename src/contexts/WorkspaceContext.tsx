@@ -12,6 +12,7 @@ interface WorkspaceContextValue {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   loading: boolean;
+  error: string;
   selectWorkspace: (workspace: Workspace) => void;
   createWorkspace: (name: string, slug: string) => Promise<Workspace>;
   refreshWorkspaces: () => Promise<void>;
@@ -24,8 +25,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const refreshWorkspaces = useCallback(async () => {
+    setLoading(true);
+    setError("");
     if (!localStorage.getItem("access_token")) {
       setWorkspaces([]);
       setCurrentWorkspace(null);
@@ -41,6 +45,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setCurrentWorkspace(selected);
       if (selected) localStorage.setItem(STORAGE_KEY, selected.id);
       else localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      setError("Your workspaces could not load. Retry before creating a brand.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return workspace;
   };
 
-  return <WorkspaceContext.Provider value={{ workspaces, currentWorkspace, loading, selectWorkspace, createWorkspace, refreshWorkspaces }}>{children}</WorkspaceContext.Provider>;
+  return <WorkspaceContext.Provider value={{ workspaces, currentWorkspace, loading, error, selectWorkspace, createWorkspace, refreshWorkspaces }}>{children}</WorkspaceContext.Provider>;
 }
 
 export function useWorkspace() {

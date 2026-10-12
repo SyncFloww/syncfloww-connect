@@ -12,14 +12,21 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
+    const requestPath = new URL(config.url || '', config.baseURL || API_BASE_URL).pathname;
+    const isAuthRequest = requestPath.startsWith('/api/auth/');
+    const isPublicAuthRequest = /^\/api\/auth\/(login|register|refresh|google|facebook|apple|password-reset|password-reset-confirm|verify-email)\/?$/.test(requestPath);
     const token = localStorage.getItem('access_token');
-    if (token) {
+    if (token && !isPublicAuthRequest) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     const workspaceId = localStorage.getItem('syncfloww.currentWorkspace') || localStorage.getItem('current_workspace_id') || localStorage.getItem('workspace_id');
-    if (workspaceId) {
+    if (workspaceId && !isAuthRequest) {
       config.headers['X-Workspace-ID'] = workspaceId;
     }
+    if (isAuthRequest) {
+      config.headers.delete('X-Workspace-ID');
+    }
+    if (isPublicAuthRequest) config.headers.delete('Authorization');
     return config;
   },
   (error) => Promise.reject(error)

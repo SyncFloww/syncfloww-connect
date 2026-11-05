@@ -16,6 +16,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Account changes must discard cached conversations, replies and workspace data.
+window.addEventListener('auth-updated', () => queryClient.clear());
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

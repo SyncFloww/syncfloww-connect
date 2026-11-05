@@ -346,6 +346,7 @@ export const useAuth = () => {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       setUser(null);
+      window.dispatchEvent(new Event('auth-updated'));
 
       return { error: null };
     } catch (error: any) {
@@ -353,6 +354,7 @@ export const useAuth = () => {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       setUser(null);
+      window.dispatchEvent(new Event('auth-updated'));
 
       return {
         error: {

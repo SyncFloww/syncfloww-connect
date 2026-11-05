@@ -19,6 +19,7 @@ import AIStudioPage from "./pages/ScriptWorkspace";
 import BrandWorkspace from "./pages/BrandWorkspace";
 import Ideas from "./pages/Ideas";
 import SocialWorkspace, { SocialCallback } from './pages/SocialWorkspace';
+import TikTokWorkspace, { TikTokCallback } from './pages/TikTokWorkspace';
 import Usage from "./pages/Usage";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -51,6 +52,7 @@ function InnerRoutes() {
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/social/tiktok/callback" element={<ProtectedRoute><TikTokCallback /></ProtectedRoute>} />
       <Route path="/social/callback" element={<ProtectedRoute><SocialCallback /></ProtectedRoute>} />
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
       <Route path="/welcome" element={<Navigate to="/onboarding" replace />} />
@@ -61,6 +63,7 @@ function InnerRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/social/tiktok" element={<TikTokWorkspace />} />
         <Route path="/social" element={<SocialWorkspace />} />
         <Route path="/usage" element={<Usage />} />
         <Route path="/ideas" element={<Ideas />} />
